@@ -1,0 +1,64 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="../locizer.js"></script>
+    <script>
+      locizer
+        .init({
+          //lng: 'en',
+          fallbackLng: 'en',
+          referenceLng: 'en',
+
+          loadIfTranslatedOver: 0.1,
+
+          projectId: 'c8038fbe-7be8-4f96-9692-943b3333185b',
+          apiKey: '27e9ecff-8926-43b0-80fd-e683abe49297',
+
+
+          // version: 'staging',
+          loadPath: 'https://api-dev.locize.io/{{projectId}}/latest/{{lng}}/{{ns}}',
+          addPath: 'https://api-dev.locize.io/missing/{{projectId}}/latest/{{lng}}/{{ns}}',
+          getLanguagesPath: 'https://api-dev.locize.io/languages/{{projectId}}',
+
+          // order and from where user language should be detected
+          order: ['querystring', 'cookie', 'localStorage', 'navigator', 'htmlTag'],
+
+          // keys or params to lookup language from
+          lookupQuerystring: 'lng',
+          lookupCookie: 'i18next',
+          lookupLocalStorage: 'i18nextLng',
+
+          // cache user language on
+          caches: ['localStorage', 'cookie'],
+
+          // optional expire and domain for set cookie
+          cookieMinutes: 10,
+          cookieDomain: 'myDomain',
+
+          // optional htmlTag with lang attribute, the default is:
+          htmlTag: document.documentElement
+        })
+        .getLanguages(function(err, lngs) {
+          console.warn(lngs);
+        })
+        .getLanguage(function(err, lng) {
+          console.warn(lng);
+        })
+        .load('translation', function(err, data) {
+          console.warn('translation', data);
+        })
+        .load('common', function(err, data) {
+          console.warn('common', data);
+        })
+        .load('common', 'de', function(err, data) {
+          console.warn('common - de', data);
+        })
+        .add('common', 'myKey', 'myValue', function() {
+          console.warn('added myKey with value myValue');
+        });
+    </script>
+  </head>
+  <body>
+  </body>
+</html>
