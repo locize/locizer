@@ -56,7 +56,7 @@ const locizer = {
     }
 
     this.getLanguage(lng, (err, lng) => {
-      this.backend.read(lng, ns, callback);
+      this.backend.read(lng, ns, (err, data) => callback(err, data, lng));
     });
 
     return this;

@@ -28,7 +28,7 @@ Or load it from the offical npm cdn:
           referenceLng: 'en',
           projectId: '[your project id]'
         })
-        .load('translation', function(err, translations) {
+        .load('translation', function(err, translations, lng) {
           // feed the translations to formatjs, polyglot,...
         });
     </script>
