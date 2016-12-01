@@ -16,7 +16,7 @@ Or load it from the offical npm cdn:
 
 [https://unpkg.com/locizer[@version]/locizer[.min].js](https://unpkg.com/locizer/locizer.min.js)
 
-```
+```html
 <!DOCTYPE html>
 <html>
   <head>
@@ -40,7 +40,7 @@ Or load it from the offical npm cdn:
 
 # Init options
 
-```
+```js
 {
   lng: 'en', // optional if set we won't detect language of user
   fallbackLng: 'en',
@@ -78,13 +78,13 @@ Or load it from the offical npm cdn:
 
 ## init
 
-```
+```js
 locizer.init(options);
 ```
 
 ## getLanguage
 
-```
+```js
 // gives the language provided in options or detected from user compared to languages existing in your project (see also init option: loadIfTranslatedOver)
 locizer.getLanguage((err, lng) => {));
 
@@ -94,7 +94,7 @@ var loc = locizer.detector.detect();
 
 ## getLanguages
 
-```
+```js
 // gives you all languages supported in your project
 locizer.getLanguages((err, lngs) => {));
 
@@ -119,7 +119,7 @@ locizer.getLanguages((err, lngs) => {));
 
 ## load
 
-```
+```js
 // load namespaces from locize in the lng provided in options or detected from user
 locizer.load('namespace', (err, res) => {});
 
@@ -129,7 +129,7 @@ locizer.load('namespace', 'de', (err, res) => {});
 
 ## add
 
-```
+```js
 // add a new key
 locizer.add('common', 'myKey', 'myValue');
 ```
