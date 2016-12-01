@@ -2,7 +2,7 @@
   "name": "locizer",
   "version": "0.1.0",
   "description": "locize connector",
-  "main": "./locizer.min.js",
+  "main": "dist/commonjs/index.js",
   "jsnext:main": "dist/es/index.js",
   "module": "dist/es/index.js",
   "keywords": [
