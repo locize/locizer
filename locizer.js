@@ -578,7 +578,9 @@ var locizer = {
     }
 
     this.getLanguage(lng, function (err, lng) {
-      _this3.backend.read(lng, ns, callback);
+      _this3.backend.read(lng, ns, function (err, data) {
+        return callback(err, data, lng);
+      });
     });
 
     return this;
