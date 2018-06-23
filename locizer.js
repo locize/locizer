@@ -757,7 +757,7 @@ function getDefaults$2() {
   };
 }
 
-var locizeLastUsed$1 = {
+var locizeLastUsed = {
   init: function init(options) {
     var isI18next = options.t && typeof options.t === 'function';
 
@@ -831,7 +831,7 @@ var locizeLastUsed$1 = {
   }
 };
 
-locizeLastUsed$1.type = '3rdParty';
+locizeLastUsed.type = '3rdParty';
 
 var regexp$1 = new RegExp('\{\{(.+?)\}\}', 'g');
 
@@ -963,7 +963,7 @@ var locizer = {
     return this;
   },
   used: function used(namespace, key) {
-    locizeLastUsed$1.used(namespace, key);
+    locizeLastUsed.used(namespace, key);
   }
 };
 

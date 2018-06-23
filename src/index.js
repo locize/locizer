@@ -22,7 +22,7 @@ const locizer = {
     this.detector = new LanguageDetector(services, options);
     this.lng = options.lng || this.detector.detect();
 
-    locizeLastUsed.init(options);
+    LocizeLastUsed.init(options);
     return this;
   },
 

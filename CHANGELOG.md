@@ -1,3 +1,6 @@
+### v1.2.1
+- fix typo
+
 ### v1.2.0
 - support context in add / update
 - support update key
