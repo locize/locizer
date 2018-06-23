@@ -1,5 +1,6 @@
 import LocizeBackend from 'i18next-locize-backend';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import LocizeLastUsed from 'locize-lastused';
 
 import { interpolate } from './interpolator';
 import { formatLanguageCode, isWhitelisted, getLanguagePartFromCode } from './languageUtils';
@@ -20,6 +21,8 @@ const locizer = {
     this.backend = new LocizeBackend(services, options);
     this.detector = new LanguageDetector(services, options);
     this.lng = options.lng || this.detector.detect();
+
+    locizeLastUsed.init(options);
     return this;
   },
 
@@ -62,9 +65,30 @@ const locizer = {
     return this;
   },
 
-  add(namespace, key, value, callback) {
-    this.backend.create(this.options.referenceLng, namespace, key, value, callback);
+  add(namespace, key, value, context, callback) {
+    let options = {};
+    if (typeof context === 'function') {
+      callback = context;
+    } else if (typeof context === 'string') {
+      options.tDescription = context;
+    }
+    this.backend.create(this.options.referenceLng, namespace, key, value, callback, options);
     return this;
+  },
+
+  update(namespace, key, value, context, callback) {
+    let options = { isUpdate: true };
+    if (typeof context === 'function') {
+      callback = context;
+    } else if (typeof context === 'string') {
+      options.tDescription = context;
+    }
+    this.backend.create(this.options.referenceLng, namespace, key, value, callback, options);
+    return this;
+  },
+
+  used(namespace, key) {
+    LocizeLastUsed.used(namespace, key);
   }
 }
 

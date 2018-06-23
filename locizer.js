@@ -1,7 +1,7 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
-  (global.locizer = factory());
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	(global.locizer = factory());
 }(this, (function () { 'use strict';
 
 function debounce(func, wait, immediate) {
@@ -68,6 +68,33 @@ function getPath(object, path) {
   return obj[k];
 }
 
+var regexp = new RegExp('\{\{(.+?)\}\}', 'g');
+
+function makeString(object) {
+  if (object == null) return '';
+  return '' + object;
+}
+
+function interpolate(str, data, lng) {
+  var match = void 0,
+      value = void 0;
+
+  function regexSafe(val) {
+    return val.replace(/\$/g, '$$$$');
+  }
+
+  // regular escape on demand
+  while (match = regexp.exec(str)) {
+    value = match[1].trim();
+    if (typeof value !== 'string') value = makeString(value);
+    if (!value) value = '';
+    value = regexSafe(value);
+    str = str.replace(match[0], data[value] || value);
+    regexp.lastIndex = 0;
+  }
+  return str;
+}
+
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -85,7 +112,9 @@ function ajax(url, options, callback, data, cache) {
     if (options.authorize && options.apiKey) {
       x.setRequestHeader('Authorization', options.apiKey);
     }
-    x.setRequestHeader('Content-type', 'application/json');
+    if (data || options.setContentTypeJSON) {
+      x.setRequestHeader('Content-type', 'application/json');
+    }
     x.onreadystatechange = function () {
       x.readyState > 3 && callback && callback(x.responseText, x);
     };
@@ -98,21 +127,30 @@ function ajax(url, options, callback, data, cache) {
 function getDefaults() {
   return {
     loadPath: 'https://api.locize.io/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
+    privatePath: 'https://api.locize.io/private/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
+    pullPath: 'https://api.locize.io/pull/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
     getLanguagesPath: 'https://api.locize.io/languages/{{projectId}}',
     addPath: 'https://api.locize.io/missing/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
+    updatePath: 'https://api.locize.io/update/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
     referenceLng: 'en',
     crossDomain: true,
-    version: 'latest'
+    setContentTypeJSON: false,
+    version: 'latest',
+    pull: false,
+    private: false,
+    whitelistThreshold: 0.9
   };
 }
 
 var Backend = function () {
-  function Backend(services) {
-    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
+  function Backend(services, options, callback) {
     _classCallCheck(this, Backend);
 
-    this.init(services, options);
+    if (services && services.projectId) {
+      this.init(null, services, {}, options);
+    } else {
+      this.init(null, options, {}, callback);
+    }
 
     this.type = 'backend';
   }
@@ -122,30 +160,90 @@ var Backend = function () {
     value: function init(services) {
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-      this.services = services;
-      this.options = _extends({}, getDefaults(), this.options, options);
+      var _this = this;
+
+      var i18nextOptions = arguments[2];
+      var callback = arguments[3];
+
+      this.options = _extends({}, getDefaults(), this.options, options); // initial
+
+      if (this.options.pull) console.warn('deprecated: pull will be removed in future versions and should be replaced with locize private versions');
+
+      if (typeof callback === 'function') {
+        this.getOptions(function (err, opts) {
+          if (err) return callback(err);
+
+          _this.options.referenceLng = options.referenceLng || opts.referenceLng || _this.options.referenceLng;
+          callback(null, opts);
+        });
+      }
 
       this.queuedWrites = {};
-      this.debouncedWrite = debounce(this.write, 10000);
+      this.debouncedProcess = debounce(this.process, 10000);
     }
   }, {
     key: 'getLanguages',
     value: function getLanguages(callback) {
-      var url = this.services.interpolator.interpolate(this.options.getLanguagesPath, { projectId: this.options.projectId });
+      var url = interpolate(this.options.getLanguagesPath, { projectId: this.options.projectId });
 
-      this.loadUrl(url, callback);
+      this.loadUrl(url, {}, callback);
+    }
+  }, {
+    key: 'getOptions',
+    value: function getOptions(callback) {
+      var _this2 = this;
+
+      this.getLanguages(function (err, data) {
+        if (err) return callback(err);
+        var keys = Object.keys(data);
+        if (!keys.length) return callback(new Error('was unable to load languages via API'));
+
+        var referenceLng = keys.reduce(function (mem, k) {
+          var item = data[k];
+          if (item.isReferenceLanguage) mem = k;
+          return mem;
+        }, '');
+
+        var whitelist = keys.reduce(function (mem, k) {
+          var item = data[k];
+          if (item.translated[_this2.options.version] && item.translated[_this2.options.version] >= _this2.options.whitelistThreshold) mem.push(k);
+          return mem;
+        }, []);
+
+        var hasRegion = keys.reduce(function (mem, k) {
+          if (k.indexOf('-') > -1) return true;
+          return mem;
+        }, false);
+
+        callback(null, {
+          fallbackLng: referenceLng,
+          referenceLng: referenceLng,
+          whitelist: whitelist,
+          load: hasRegion ? 'all' : 'languageOnly'
+        });
+      });
     }
   }, {
     key: 'read',
     value: function read(language, namespace, callback) {
-      var url = this.services.interpolator.interpolate(this.options.loadPath, { lng: language, ns: namespace, projectId: this.options.projectId, version: this.options.version });
+      var url = void 0;
+      var options = {};
+      if (this.options.private) {
+        url = interpolate(this.options.privatePath, { lng: language, ns: namespace, projectId: this.options.projectId, version: this.options.version });
+        options = { authorize: true };
+      } else if (this.options.pull) {
+        url = interpolate(this.options.pullPath, { lng: language, ns: namespace, projectId: this.options.projectId, version: this.options.version });
+        options = { authorize: true };
+      } else {
+        url = interpolate(this.options.loadPath, { lng: language, ns: namespace, projectId: this.options.projectId, version: this.options.version });
+      }
 
-      this.loadUrl(url, callback);
+      this.loadUrl(url, options, callback);
     }
   }, {
     key: 'loadUrl',
-    value: function loadUrl(url, callback) {
-      ajax(url, this.options, function (data, xhr) {
+    value: function loadUrl(url, options, callback) {
+      ajax(url, _extends({}, this.options, options), function (data, xhr) {
         if (xhr.status >= 500 && xhr.status < 600) return callback('failed loading ' + url, true /* retry */);
         if (xhr.status >= 400 && xhr.status < 500) return callback('failed loading ' + url, false /* no retry */);
 
@@ -162,62 +260,127 @@ var Backend = function () {
     }
   }, {
     key: 'create',
-    value: function create(languages, namespace, key, fallbackValue, callback) {
-      var _this = this;
+    value: function create(languages, namespace, key, fallbackValue, callback, options) {
+      var _this3 = this;
 
       if (!callback) callback = function callback() {};
       if (typeof languages === 'string') languages = [languages];
 
       languages.forEach(function (lng) {
-        if (lng === _this.options.referenceLng) _this.queue.call(_this, _this.options.referenceLng, namespace, key, fallbackValue, callback);
+        if (lng === _this3.options.referenceLng) _this3.queue.call(_this3, _this3.options.referenceLng, namespace, key, fallbackValue, callback, options);
+      });
+    }
+  }, {
+    key: 'update',
+    value: function update(languages, namespace, key, fallbackValue, callback, options) {
+      var _this4 = this;
+
+      if (!callback) callback = function callback() {};
+      if (!options) options = {};
+      if (typeof languages === 'string') languages = [languages];
+
+      // mark as update
+      options.isUpdate = true;
+
+      languages.forEach(function (lng) {
+        if (lng === _this4.options.referenceLng) _this4.queue.call(_this4, _this4.options.referenceLng, namespace, key, fallbackValue, callback, options);
       });
     }
   }, {
     key: 'write',
     value: function write(lng, namespace) {
-      var _this2 = this;
+      var _this5 = this;
 
       var lock = getPath(this.queuedWrites, ['locks', lng, namespace]);
       if (lock) return;
 
-      var url = this.services.interpolator.interpolate(this.options.addPath, { lng: lng, ns: namespace, projectId: this.options.projectId, version: this.options.version });
+      var missingUrl = interpolate(this.options.addPath, { lng: lng, ns: namespace, projectId: this.options.projectId, version: this.options.version });
+      var updatesUrl = interpolate(this.options.updatePath, { lng: lng, ns: namespace, projectId: this.options.projectId, version: this.options.version });
 
       var missings = getPath(this.queuedWrites, [lng, namespace]);
       setPath(this.queuedWrites, [lng, namespace], []);
 
       if (missings.length) {
-        (function () {
-          // lock
-          setPath(_this2.queuedWrites, ['locks', lng, namespace], true);
+        // lock
+        setPath(this.queuedWrites, ['locks', lng, namespace], true);
 
-          var payload = {};
-          missings.forEach(function (item) {
-            payload[item.key] = item.fallbackValue || '';
-          });
+        var hasMissing = false;
+        var hasUpdates = false;
+        var payloadMissing = {};
+        var payloadUpdate = {};
 
-          ajax(url, _extends({ authorize: true }, _this2.options), function (data, xhr) {
-            //const statusCode = xhr.status.toString();
-            // TODO: if statusCode === 4xx do log
+        missings.forEach(function (item) {
+          var value = item.options && item.options.tDescription ? { value: item.fallbackValue || '', context: { text: item.options.tDescription } } : item.fallbackValue || '';
+          if (item.options && item.options.isUpdate) {
+            if (!hasUpdates) hasUpdates = true;
+            payloadUpdate[item.key] = value;
+          } else {
+            if (!hasMissing) hasMissing = true;
+            payloadMissing[item.key] = value;
+          }
+        });
 
+        var todo = 0;
+        if (hasMissing) todo++;
+        if (hasUpdates) todo++;
+        var doneOne = function doneOne() {
+          todo--;
+
+          if (!todo) {
             // unlock
-            setPath(_this2.queuedWrites, ['locks', lng, namespace], false);
+            setPath(_this5.queuedWrites, ['locks', lng, namespace], false);
 
             missings.forEach(function (missing) {
               if (missing.callback) missing.callback();
             });
 
             // rerun
-            _this2.debouncedWrite(lng, namespace);
-          }, payload);
-        })();
+            _this5.debouncedProcess(lng, namespace);
+          }
+        };
+
+        if (!todo) doneOne();
+
+        if (hasMissing) {
+          ajax(missingUrl, _extends({ authorize: true }, this.options), function (data, xhr) {
+            //const statusCode = xhr.status.toString();
+            // TODO: if statusCode === 4xx do log
+
+            doneOne();
+          }, payloadMissing);
+        }
+
+        if (hasUpdates) {
+          ajax(updatesUrl, _extends({ authorize: true }, this.options), function (data, xhr) {
+            //const statusCode = xhr.status.toString();
+            // TODO: if statusCode === 4xx do log
+
+            doneOne();
+          }, payloadUpdate);
+        }
       }
     }
   }, {
-    key: 'queue',
-    value: function queue(lng, namespace, key, fallbackValue, callback) {
-      pushPath(this.queuedWrites, [lng, namespace], { key: key, fallbackValue: fallbackValue || '', callback: callback });
+    key: 'process',
+    value: function process() {
+      var _this6 = this;
 
-      this.debouncedWrite(lng, namespace);
+      Object.keys(this.queuedWrites).forEach(function (lng) {
+        if (lng === 'locks') return;
+        Object.keys(_this6.queuedWrites[lng]).forEach(function (ns) {
+          var todo = _this6.queuedWrites[lng][ns];
+          if (todo.length) {
+            _this6.write(lng, ns);
+          }
+        });
+      });
+    }
+  }, {
+    key: 'queue',
+    value: function queue(lng, namespace, key, fallbackValue, callback, options) {
+      pushPath(this.queuedWrites, [lng, namespace], { key: key, fallbackValue: fallbackValue || '', callback: callback, options: options });
+
+      this.debouncedProcess();
     }
   }]);
 
@@ -384,6 +547,44 @@ var htmlTag = {
   }
 };
 
+var path = {
+  name: 'path',
+
+  lookup: function lookup(options) {
+    var found = void 0;
+    if (typeof window !== 'undefined') {
+      var language = window.location.pathname.match(/\/([a-zA-Z-]*)/g);
+      if (language instanceof Array) {
+        if (typeof options.lookupFromUrlIndex === 'number') {
+          found = language[options.lookupFromPathIndex].replace('/', '');
+        } else {
+          found = language[0].replace('/', '');
+        }
+      }
+    }
+    return found;
+  }
+};
+
+var subdomain = {
+  name: 'subdomain',
+
+  lookup: function lookup(options) {
+    var found = void 0;
+    if (typeof window !== 'undefined') {
+      var language = window.location.pathname.match(/(?:http[s]*\:\/\/)*(.*?)\.(?=[^\/]*\..{2,5})/gi);
+      if (language instanceof Array) {
+        if (typeof options.lookupFromSubdomainIndex === 'number') {
+          found = language[options.lookupFromSubdomainIndex].replace('http://', '').replace('https://', '').replace('.', '');
+        } else {
+          found = language[0].replace('http://', '').replace('https://', '').replace('.', '');
+        }
+      }
+    }
+    return found;
+  }
+};
+
 var _createClass$1 = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck$1(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -396,7 +597,8 @@ function getDefaults$1() {
     lookupLocalStorage: 'i18nextLng',
 
     // cache user language
-    caches: ['localStorage']
+    caches: ['localStorage'],
+    excludeCacheFor: ['cimode']
     //cookieMinutes: 10,
     //cookieDomain: 'myDomain'
   };
@@ -404,7 +606,7 @@ function getDefaults$1() {
 
 var Browser = function () {
   function Browser(services) {
-    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     _classCallCheck$1(this, Browser);
 
@@ -417,8 +619,8 @@ var Browser = function () {
   _createClass$1(Browser, [{
     key: 'init',
     value: function init(services) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-      var i18nOptions = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var i18nOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
       this.services = services;
       this.options = defaults(options, this.options || {}, getDefaults$1());
@@ -429,6 +631,8 @@ var Browser = function () {
       this.addDetector(localStorage);
       this.addDetector(navigator$1);
       this.addDetector(htmlTag);
+      this.addDetector(path);
+      this.addDetector(subdomain);
     }
   }, {
     key: 'addDetector',
@@ -458,7 +662,19 @@ var Browser = function () {
         if (_this.services.languageUtils.isWhitelisted(cleanedLng)) found = cleanedLng;
       });
 
-      return found || this.i18nOptions.fallbackLng[0];
+      if (!found) {
+        var fallbacks = this.i18nOptions.fallbackLng;
+        if (typeof fallbacks === 'string') fallbacks = [fallbacks];
+        if (!fallbacks) fallbacks = [];
+
+        if (Object.prototype.toString.apply(fallbacks) === '[object Array]') {
+          found = fallbacks[0];
+        } else {
+          found = fallbacks[0] || fallbacks.default && fallbacks.default[0];
+        }
+      }
+
+      return found;
     }
   }, {
     key: 'cacheUserLanguage',
@@ -467,6 +683,7 @@ var Browser = function () {
 
       if (!caches) caches = this.options.caches;
       if (!caches) return;
+      if (this.options.excludeCacheFor && this.options.excludeCacheFor.indexOf(lng) > -1) return;
       caches.forEach(function (cacheName) {
         if (_this2.detectors[cacheName]) _this2.detectors[cacheName].cacheUserLanguage(lng, _this2.options);
       });
@@ -478,14 +695,152 @@ var Browser = function () {
 
 Browser.type = 'languageDetector';
 
-var regexp = new RegExp('\{\{(.+?)\}\}', 'g');
+function debounce$1(func, wait, immediate) {
+	var timeout;
+	return function () {
+		var context = this,
+		    args = arguments;
+		var later = function later() {
+			timeout = null;
+			if (!immediate) func.apply(context, args);
+		};
+		var callNow = immediate && !timeout;
+		clearTimeout(timeout);
+		timeout = setTimeout(later, wait);
+		if (callNow) func.apply(context, args);
+	};
+}
 
-function makeString(object) {
+function replaceIn(str, arr, options) {
+	var ret = str;
+	arr.forEach(function (s) {
+		var regexp = new RegExp('{{' + s + '}}', 'g');
+		ret = ret.replace(regexp, options[s]);
+	});
+
+	return ret;
+}
+
+var _extends$1 = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+// https://gist.github.com/Xeoncross/7663273
+function ajax$1(url, options, callback, data, cache) {
+  try {
+    var x = new (XMLHttpRequest || ActiveXObject)('MSXML2.XMLHTTP.3.0');
+    x.open(data ? 'POST' : 'GET', url, 1);
+    if (!options.crossDomain) {
+      x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    }
+    if (options.authorize && options.apiKey) {
+      x.setRequestHeader('Authorization', options.apiKey);
+    }
+    if (data || options.setContentTypeJSON) {
+      x.setRequestHeader('Content-type', 'application/json');
+    }
+    x.onreadystatechange = function () {
+      x.readyState > 3 && callback && callback(x.responseText, x);
+    };
+    x.send(JSON.stringify(data));
+  } catch (e) {
+    window.console && console.log(e);
+  }
+}
+
+function getDefaults$2() {
+  return {
+    lastUsedPath: 'https://api.locize.io/used/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
+    referenceLng: 'en',
+    crossDomain: true,
+    setContentTypeJSON: false,
+    version: 'latest',
+    debounceSubmit: 90000
+  };
+}
+
+var locizeLastUsed$1 = {
+  init: function init(options) {
+    var isI18next = options.t && typeof options.t === 'function';
+
+    this.options = isI18next ? _extends$1({}, getDefaults$2(), this.options, options.options.locizeLastUsed) : _extends$1({}, getDefaults$2(), this.options, options);
+
+    this.submitting = null;
+    this.pending = {};
+    this.done = {};
+
+    this.submit = debounce$1(this.submit, this.options.debounceSubmit);
+
+    // intercept
+    if (isI18next) this.interceptI18next(options);
+  },
+
+  interceptI18next: function interceptI18next(i18next) {
+    var _this = this;
+
+    var origGetResource = i18next.services.resourceStore.getResource;
+
+    i18next.services.resourceStore.getResource = function (lng, ns, key, options) {
+      // call last used
+      if (key) _this.used(ns, key);
+
+      // by pass orginal call
+      return origGetResource.call(i18next.services.resourceStore, lng, ns, key, options);
+    };
+  },
+
+  used: function used(ns, key) {
+    var _this2 = this;
+
+    ['pending', 'done'].forEach(function (k) {
+      if (_this2.done[ns] && _this2.done[ns][key]) return;
+      if (!_this2[k][ns]) _this2[k][ns] = {};
+      _this2[k][ns][key] = true;
+    });
+
+    this.submit();
+  },
+
+  submit: function submit() {
+    var _this3 = this;
+
+    if (this.submitting) return this.submit();
+    this.submitting = this.pending;
+    this.pending = {};
+
+    var namespaces = Object.keys(this.submitting);
+
+    var todo = namespaces.length;
+    var doneOne = function doneOne() {
+      todo--;
+
+      if (!todo) {
+        _this3.submitting = null;
+      }
+    };
+    namespaces.forEach(function (ns) {
+      var keys = Object.keys(_this3.submitting[ns]);
+      var url = replaceIn(_this3.options.lastUsedPath, ['projectId', 'version', 'lng', 'ns'], _extends$1({}, _this3.options, { lng: _this3.options.referenceLng, ns: ns }));
+
+      if (keys.length) {
+        ajax$1(url, _extends$1({ authorize: true }, _this3.options), function (data, xhr) {
+          doneOne();
+        }, keys);
+      } else {
+        doneOne();
+      }
+    });
+  }
+};
+
+locizeLastUsed$1.type = '3rdParty';
+
+var regexp$1 = new RegExp('\{\{(.+?)\}\}', 'g');
+
+function makeString$1(object) {
   if (object == null) return '';
   return '' + object;
 }
 
-function interpolate(str, data, lng) {
+function interpolate$1(str, data, lng) {
   var match = void 0,
       value = void 0;
 
@@ -494,13 +849,13 @@ function interpolate(str, data, lng) {
   }
 
   // regular escape on demand
-  while (match = regexp.exec(str)) {
+  while (match = regexp$1.exec(str)) {
     value = match[1].trim();
-    if (typeof value !== 'string') value = makeString(value);
+    if (typeof value !== 'string') value = makeString$1(value);
     if (!value) value = '';
     value = regexSafe(value);
     str = str.replace(match[0], data[value] || value);
-    regexp.lastIndex = 0;
+    regexp$1.lastIndex = 0;
   }
   return str;
 }
@@ -523,7 +878,7 @@ function getLanguagePartFromCode(code) {
 
 var services = {
   interpolator: {
-    interpolate: interpolate
+    interpolate: interpolate$1
   },
   languageUtils: {
     formatLanguageCode: formatLanguageCode,
@@ -537,6 +892,8 @@ var locizer = {
     this.backend = new Backend(services, options);
     this.detector = new Browser(services, options);
     this.lng = options.lng || this.detector.detect();
+
+    locizeLastUsed.init(options);
     return this;
   },
   getLanguage: function getLanguage(lng, callback) {
@@ -585,9 +942,28 @@ var locizer = {
 
     return this;
   },
-  add: function add(namespace, key, value, callback) {
-    this.backend.create(this.options.referenceLng, namespace, key, value, callback);
+  add: function add(namespace, key, value, context, callback) {
+    var options = {};
+    if (typeof context === 'function') {
+      callback = context;
+    } else if (typeof context === 'string') {
+      options.tDescription = context;
+    }
+    this.backend.create(this.options.referenceLng, namespace, key, value, callback, options);
     return this;
+  },
+  update: function update(namespace, key, value, context, callback) {
+    var options = { isUpdate: true };
+    if (typeof context === 'function') {
+      callback = context;
+    } else if (typeof context === 'string') {
+      options.tDescription = context;
+    }
+    this.backend.create(this.options.referenceLng, namespace, key, value, callback, options);
+    return this;
+  },
+  used: function used(namespace, key) {
+    locizeLastUsed$1.used(namespace, key);
   }
 };
 

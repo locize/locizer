@@ -51,6 +51,7 @@ Or load it from the offical npm cdn:
   projectId: 'c8038fbe-7be8-4f96-9692-943b3333185b',
   apiKey: '27e9ecff-8926-43b0-80fd-e683abe49297', // only needed if you want to add new keys via locizer - remove on production!
   version: 'latest', // version to load from locize
+  private: false, // set true if using locize private publish
 
   // language detection options:
 
@@ -131,5 +132,19 @@ locizer.load('namespace', 'de', (err, res) => {});
 
 ```js
 // add a new key
-locizer.add('common', 'myKey', 'myValue');
+locizer.add('myNamespace', 'myKey', 'myValue', 'context information');
+```
+
+## update
+
+```js
+// add a new key
+locizer.update('myNamespace', 'myKey', 'myValue', 'context information');
+```
+
+## setting last used info
+
+```js
+// add a new key
+locizer.used('myNamespace', 'myKey');
 ```

@@ -1,6 +1,6 @@
 {
   "name": "locizer",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "locize connector",
   "main": "dist/commonjs/index.js",
   "jsnext:main": "dist/es/index.js",
@@ -18,8 +18,9 @@
     "url": "git://github.com/locize/locizer.git"
   },
   "dependencies": {
-    "i18next-browser-languagedetector": "1.0.1",
-    "i18next-locize-backend": "1.0.0"
+    "i18next-browser-languagedetector": "2.2.0",
+    "i18next-locize-backend": "1.6.0",
+    "locize-lastused": "1.0.1"
   },
   "devDependencies": {
     "aws-sdk": "2.7.9",
