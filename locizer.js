@@ -919,11 +919,14 @@ var locizer = {
   getLanguages: function getLanguages(callback) {
     var _this2 = this;
 
-    if (this.publishedLngs) callback(null, this.publishedLngs);
-    this.backend.getLanguages(function (err, data) {
-      if (!err) _this2.publishedLngs = data;
-      callback(null, data);
-    });
+    if (this.publishedLngs) {
+      callback(null, this.publishedLngs);
+    } else {
+      this.backend.getLanguages(function (err, data) {
+        if (!err) _this2.publishedLngs = data;
+        callback(null, data);
+      });
+    }
     return this;
   },
   load: function load(ns, lng, callback) {

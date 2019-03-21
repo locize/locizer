@@ -44,11 +44,14 @@ const locizer = {
   },
 
   getLanguages(callback) {
-    if (this.publishedLngs) callback(null, this.publishedLngs);
-    this.backend.getLanguages((err, data) => {
-      if (!err) this.publishedLngs = data;
-      callback(null, data);
-    });
+    if (this.publishedLngs) {
+      callback(null, this.publishedLngs);
+    } else {
+      this.backend.getLanguages((err, data) => {
+        if (!err) this.publishedLngs = data;
+        callback(null, data);
+      });
+    }
     return this;
   },
 
