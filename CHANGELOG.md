@@ -1,3 +1,7 @@
+### v1.3.0
+
+- update dependencies (adds host check for add, update and used)
+
 ### v1.2.2
 
 - fix double callback issue
