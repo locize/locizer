@@ -24,21 +24,22 @@ Or load it from the offical npm cdn:
     <script>
       locizer
         .init({
-          fallbackLng: 'en',
-          referenceLng: 'en',
-          projectId: '[your project id]'
+          fallbackLng: "en",
+          referenceLng: "en",
+          projectId: "[your project id]"
         })
-        .load('translation', function(err, translations, lng) {
+        .load("translation", function(err, translations, lng) {
           // feed the translations to formatjs, polyglot,...
         });
     </script>
   </head>
-  <body>
-  </body>
+  <body></body>
 </html>
 ```
 
 # Init options
+
+**IMPORTANT** make sure you do not add your apiKey in the production build to avoid misuse by strangers
 
 ```js
 {
@@ -52,6 +53,13 @@ Or load it from the offical npm cdn:
   apiKey: '27e9ecff-8926-43b0-80fd-e683abe49297', // only needed if you want to add new keys via locizer - remove on production!
   version: 'latest', // version to load from locize
   private: false, // set true if using locize private publish
+
+  // hostnames that are allowed to send last used data
+  // please keep those to your local system, staging, test servers (not production)
+  allowedHosts: ['localhost'],
+  // hostnames that are allowed to add, update keys
+  // please keep those to your local system, staging, test servers (not production)
+  allowedAddOrUpdateHosts: ['localhost'],
 
   // language detection options:
 
@@ -122,29 +130,29 @@ locizer.getLanguages((err, lngs) => {));
 
 ```js
 // load namespaces from locize in the lng provided in options or detected from user
-locizer.load('namespace', (err, res) => {});
+locizer.load("namespace", (err, res) => {});
 
 // load in different lng
-locizer.load('namespace', 'de', (err, res) => {});
+locizer.load("namespace", "de", (err, res) => {});
 ```
 
 ## add
 
 ```js
 // add a new key
-locizer.add('myNamespace', 'myKey', 'myValue', 'context information');
+locizer.add("myNamespace", "myKey", "myValue", "context information");
 ```
 
 ## update
 
 ```js
 // add a new key
-locizer.update('myNamespace', 'myKey', 'myValue', 'context information');
+locizer.update("myNamespace", "myKey", "myValue", "context information");
 ```
 
 ## setting last used info
 
 ```js
 // add a new key
-locizer.used('myNamespace', 'myKey');
+locizer.used("myNamespace", "myKey");
 ```

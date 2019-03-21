@@ -138,13 +138,15 @@ function getDefaults() {
     version: 'latest',
     pull: false,
     private: false,
-    whitelistThreshold: 0.9
+    whitelistThreshold: 0.9,
+    failLoadingOnEmptyJSON: false, // useful if using chained backend
+    allowedAddOrUpdateHosts: ['localhost']
   };
 }
 
-var Backend = function () {
-  function Backend(services, options, callback) {
-    _classCallCheck(this, Backend);
+var I18NextLocizeBackend = function () {
+  function I18NextLocizeBackend(services, options, callback) {
+    _classCallCheck(this, I18NextLocizeBackend);
 
     if (services && services.projectId) {
       this.init(null, services, {}, options);
@@ -155,7 +157,7 @@ var Backend = function () {
     this.type = 'backend';
   }
 
-  _createClass(Backend, [{
+  _createClass(I18NextLocizeBackend, [{
     key: 'init',
     value: function init(services) {
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -168,6 +170,13 @@ var Backend = function () {
       this.options = _extends({}, getDefaults(), this.options, options); // initial
 
       if (this.options.pull) console.warn('deprecated: pull will be removed in future versions and should be replaced with locize private versions');
+
+      var hostname = window.location && window.location.hostname;
+      if (hostname) {
+        this.isAddOrUpdateAllowed = this.options.allowedAddOrUpdateHosts.indexOf(hostname) > -1;
+      } else {
+        this.isAddOrUpdateAllowed = true;
+      }
 
       if (typeof callback === 'function') {
         this.getOptions(function (err, opts) {
@@ -243,6 +252,8 @@ var Backend = function () {
   }, {
     key: 'loadUrl',
     value: function loadUrl(url, options, callback) {
+      var _this3 = this;
+
       ajax(url, _extends({}, this.options, options), function (data, xhr) {
         if (xhr.status >= 500 && xhr.status < 600) return callback('failed loading ' + url, true /* retry */);
         if (xhr.status >= 400 && xhr.status < 500) return callback('failed loading ' + url, false /* no retry */);
@@ -255,27 +266,30 @@ var Backend = function () {
           err = 'failed parsing ' + url + ' to json';
         }
         if (err) return callback(err, false);
+        if (_this3.options.failLoadingOnEmptyJSON && !Object.keys(ret).length) return callback('loaded result empty for ' + url, false);
         callback(null, ret);
       });
     }
   }, {
     key: 'create',
     value: function create(languages, namespace, key, fallbackValue, callback, options) {
-      var _this3 = this;
+      var _this4 = this;
 
       if (!callback) callback = function callback() {};
+      if (!this.isAddOrUpdateAllowed) return callback('host is not allowed to create key.');
       if (typeof languages === 'string') languages = [languages];
 
       languages.forEach(function (lng) {
-        if (lng === _this3.options.referenceLng) _this3.queue.call(_this3, _this3.options.referenceLng, namespace, key, fallbackValue, callback, options);
+        if (lng === _this4.options.referenceLng) _this4.queue.call(_this4, _this4.options.referenceLng, namespace, key, fallbackValue, callback, options);
       });
     }
   }, {
     key: 'update',
     value: function update(languages, namespace, key, fallbackValue, callback, options) {
-      var _this4 = this;
+      var _this5 = this;
 
       if (!callback) callback = function callback() {};
+      if (!this.isAddOrUpdateAllowed) return callback('host is not allowed to update key.');
       if (!options) options = {};
       if (typeof languages === 'string') languages = [languages];
 
@@ -283,13 +297,13 @@ var Backend = function () {
       options.isUpdate = true;
 
       languages.forEach(function (lng) {
-        if (lng === _this4.options.referenceLng) _this4.queue.call(_this4, _this4.options.referenceLng, namespace, key, fallbackValue, callback, options);
+        if (lng === _this5.options.referenceLng) _this5.queue.call(_this5, _this5.options.referenceLng, namespace, key, fallbackValue, callback, options);
       });
     }
   }, {
     key: 'write',
     value: function write(lng, namespace) {
-      var _this5 = this;
+      var _this6 = this;
 
       var lock = getPath(this.queuedWrites, ['locks', lng, namespace]);
       if (lock) return;
@@ -328,14 +342,14 @@ var Backend = function () {
 
           if (!todo) {
             // unlock
-            setPath(_this5.queuedWrites, ['locks', lng, namespace], false);
+            setPath(_this6.queuedWrites, ['locks', lng, namespace], false);
 
             missings.forEach(function (missing) {
               if (missing.callback) missing.callback();
             });
 
             // rerun
-            _this5.debouncedProcess(lng, namespace);
+            _this6.debouncedProcess(lng, namespace);
           }
         };
 
@@ -363,14 +377,14 @@ var Backend = function () {
   }, {
     key: 'process',
     value: function process() {
-      var _this6 = this;
+      var _this7 = this;
 
       Object.keys(this.queuedWrites).forEach(function (lng) {
         if (lng === 'locks') return;
-        Object.keys(_this6.queuedWrites[lng]).forEach(function (ns) {
-          var todo = _this6.queuedWrites[lng][ns];
+        Object.keys(_this7.queuedWrites[lng]).forEach(function (ns) {
+          var todo = _this7.queuedWrites[lng][ns];
           if (todo.length) {
-            _this6.write(lng, ns);
+            _this7.write(lng, ns);
           }
         });
       });
@@ -384,10 +398,10 @@ var Backend = function () {
     }
   }]);
 
-  return Backend;
+  return I18NextLocizeBackend;
 }();
 
-Backend.type = 'backend';
+I18NextLocizeBackend.type = 'backend';
 
 var arr = [];
 var each = arr.forEach;
@@ -555,7 +569,10 @@ var path = {
     if (typeof window !== 'undefined') {
       var language = window.location.pathname.match(/\/([a-zA-Z-]*)/g);
       if (language instanceof Array) {
-        if (typeof options.lookupFromUrlIndex === 'number') {
+        if (typeof options.lookupFromPathIndex === 'number') {
+          if (typeof language[options.lookupFromPathIndex] !== 'string') {
+            return undefined;
+          }
           found = language[options.lookupFromPathIndex].replace('/', '');
         } else {
           found = language[0].replace('/', '');
@@ -572,7 +589,7 @@ var subdomain = {
   lookup: function lookup(options) {
     var found = void 0;
     if (typeof window !== 'undefined') {
-      var language = window.location.pathname.match(/(?:http[s]*\:\/\/)*(.*?)\.(?=[^\/]*\..{2,5})/gi);
+      var language = window.location.href.match(/(?:http[s]*\:\/\/)*(.*?)\.(?=[^\/]*\..{2,5})/gi);
       if (language instanceof Array) {
         if (typeof options.lookupFromSubdomainIndex === 'number') {
           found = language[options.lookupFromSubdomainIndex].replace('http://', '').replace('https://', '').replace('.', '');
@@ -624,6 +641,10 @@ var Browser = function () {
 
       this.services = services;
       this.options = defaults(options, this.options || {}, getDefaults$1());
+
+      // backwards compatibility
+      if (this.options.lookupFromUrlIndex) this.options.lookupFromPathIndex = this.options.lookupFromUrlIndex;
+
       this.i18nOptions = i18nOptions;
 
       this.addDetector(cookie$1);
@@ -742,7 +763,7 @@ function ajax$1(url, options, callback, data, cache) {
     };
     x.send(JSON.stringify(data));
   } catch (e) {
-    window.console && console.log(e);
+    window.console && window.console.log(e);
   }
 }
 
@@ -753,7 +774,8 @@ function getDefaults$2() {
     crossDomain: true,
     setContentTypeJSON: false,
     version: 'latest',
-    debounceSubmit: 90000
+    debounceSubmit: 90000,
+    allowedHosts: ['localhost']
   };
 }
 
@@ -762,6 +784,13 @@ var locizeLastUsed = {
     var isI18next = options.t && typeof options.t === 'function';
 
     this.options = isI18next ? _extends$1({}, getDefaults$2(), this.options, options.options.locizeLastUsed) : _extends$1({}, getDefaults$2(), this.options, options);
+
+    var hostname = window.location && window.location.hostname;
+    if (hostname) {
+      this.isAllowed = this.options.allowedHosts.indexOf(hostname) > -1;
+    } else {
+      this.isAllowed = true;
+    }
 
     this.submitting = null;
     this.pending = {};
@@ -802,6 +831,7 @@ var locizeLastUsed = {
   submit: function submit() {
     var _this3 = this;
 
+    if (!this.isAllowed) return;
     if (this.submitting) return this.submit();
     this.submitting = this.pending;
     this.pending = {};
@@ -889,7 +919,7 @@ var services = {
 var locizer = {
   init: function init(options) {
     this.options = options;
-    this.backend = new Backend(services, options);
+    this.backend = new I18NextLocizeBackend(services, options);
     this.detector = new Browser(services, options);
     this.lng = options.lng || this.detector.detect();
 
