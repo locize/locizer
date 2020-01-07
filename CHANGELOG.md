@@ -1,3 +1,9 @@
+### v2.0.0
+
+- update dependencies to using `locize.app` instead of `locize.io`
+- remove bower
+- update build process
+
 ### v1.3.0
 
 - update dependencies (adds host check for add, update and used)
