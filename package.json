@@ -1,6 +1,6 @@
 {
   "name": "locizer",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "locize connector",
   "main": "dist/commonjs/index.js",
   "jsnext:main": "dist/es/index.js",
@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "i18next-browser-languagedetector": "4.0.1",
-    "i18next-locize-backend": "3.0.0",
+    "i18next-locize-backend": "3.0.3",
     "locize-lastused": "2.0.0"
   },
   "devDependencies": {

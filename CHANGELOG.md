@@ -1,3 +1,7 @@
+### v2.0.1
+
+- update dependencies
+
 ### v2.0.0
 
 - update dependencies to using `locize.app` instead of `locize.io`
