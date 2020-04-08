@@ -1,3 +1,7 @@
+### v2.1.2
+
+- update dependencies
+
 ### v2.1.1
 
 - update dependencies
