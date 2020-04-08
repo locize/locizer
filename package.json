@@ -1,6 +1,6 @@
 {
   "name": "locizer",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "locize connector",
   "main": "dist/commonjs/index.js",
   "jsnext:main": "dist/es/index.js",
