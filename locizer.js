@@ -159,6 +159,7 @@
     }
   }
   if (!fetchApi$1 && fetchNode) fetchApi$1 = undefined || fetchNode; // because of strange export
+  if (typeof fetchApi$1 !== 'function') fetchApi$1 = undefined;
 
   // fetch api stuff
   const requestWithFetch = (options, url, payload, callback) => {
@@ -686,7 +687,7 @@
 
       if (hasMissing) {
         request(
-          { ...{ authorize: true }, ...this.options },
+          defaults({ authorize: true }, this.options),
           missingUrl,
           payloadMissing,
           doneOne
@@ -695,7 +696,7 @@
 
       if (hasUpdates) {
         request(
-          { ...{ authorize: true }, ...this.options },
+          defaults({ authorize: true }, this.options),
           updatesUrl,
           payloadUpdate,
           doneOne
@@ -1025,7 +1026,8 @@
       excludeCacheFor: ['cimode'],
       //cookieMinutes: 10,
       //cookieDomain: 'myDomain'
-      checkWhitelist: true
+      checkWhitelist: true,
+      checkForSimilarInWhitelist: false
     };
   }
 
@@ -1048,7 +1050,9 @@
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         var i18nOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
         this.services = services;
-        this.options = defaults$1(options, this.options || {}, getDefaults$1()); // backwards compatibility
+        this.options = defaults$1(options, this.options || {}, getDefaults$1()); // if checking for similar, user needs to check whitelist
+
+        if (this.options.checkForSimilarInWhitelist) this.options.checkWhitelist = true; // backwards compatibility
 
         if (this.options.lookupFromUrlIndex) this.options.lookupFromPathIndex = this.options.lookupFromUrlIndex;
         this.i18nOptions = i18nOptions;
@@ -1087,6 +1091,10 @@
           var cleanedLng = _this.services.languageUtils.formatLanguageCode(lng);
 
           if (!_this.options.checkWhitelist || _this.services.languageUtils.isWhitelisted(cleanedLng)) found = cleanedLng;
+
+          if (!found && _this.options.checkForSimilarInWhitelist) {
+            found = _this.getSimilarInWhitelist(cleanedLng);
+          }
         });
 
         if (!found) {
@@ -1115,12 +1123,51 @@
           if (_this2.detectors[cacheName]) _this2.detectors[cacheName].cacheUserLanguage(lng, _this2.options);
         });
       }
+    }, {
+      key: "getSimilarInWhitelist",
+      value: function getSimilarInWhitelist(cleanedLng) {
+        var _this3 = this;
+
+        if (!this.i18nOptions.whitelist) return;
+
+        if (cleanedLng.includes('-')) {
+          // i.e. es-MX should check if es is in whitelist
+          var prefix = cleanedLng.split('-')[0];
+          var cleanedPrefix = this.services.languageUtils.formatLanguageCode(prefix);
+          if (this.services.languageUtils.isWhitelisted(cleanedPrefix)) return cleanedPrefix; // if reached here, nothing found. continue to search for similar using only prefix
+
+          cleanedLng = cleanedPrefix;
+        } // i.e. 'pt' should return 'pt-BR'. If multiple in whitelist with 'pt-', then use first one in whitelist
+
+
+        var similar = this.i18nOptions.whitelist.find(function (whitelistLng) {
+          var cleanedWhitelistLng = _this3.services.languageUtils.formatLanguageCode(whitelistLng);
+
+          if (cleanedWhitelistLng.startsWith(cleanedLng)) return cleanedWhitelistLng;
+        });
+        if (similar) return similar;
+      }
     }]);
 
     return Browser;
   }();
 
   Browser.type = 'languageDetector';
+
+  const arr$2 = [];
+  const each$2 = arr$2.forEach;
+  const slice$2 = arr$2.slice;
+
+  function defaults$2 (obj) {
+    each$2.call(slice$2.call(arguments, 1), (source) => {
+      if (source) {
+        for (var prop in source) {
+          if (obj[prop] === undefined) obj[prop] = source[prop];
+        }
+      }
+    });
+    return obj
+  }
 
   function debounce$1 (func, wait, immediate) {
     var timeout;
@@ -1203,6 +1250,7 @@
     }
   }
   if (!fetchApi$3 && fetchNode$1) fetchApi$3 = undefined || fetchNode$1; // because of strange export
+  if (typeof fetchApi$3 !== 'function') fetchApi$3 = undefined;
 
   // fetch api stuff
   const requestWithFetch$1 = (options, url, payload, callback) => {
@@ -1290,7 +1338,7 @@
     init (options) {
       const isI18next = options.t && typeof options.t === 'function';
 
-      this.options = isI18next ? { ...getDefaults$2(), ...this.options, ...options.options.locizeLastUsed } : { ...getDefaults$2(), ...this.options, ...options };
+      this.options = isI18next ? defaults$2(options.options.locizeLastUsed, this.options || {}, getDefaults$2()) : defaults$2(options, this.options || {}, getDefaults$2());
 
       const hostname = typeof window !== 'undefined' && window.location && window.location.hostname;
       if (hostname) {
@@ -1354,10 +1402,10 @@
       };
       namespaces.forEach((ns) => {
         const keys = Object.keys(this.submitting[ns]);
-        const url = replaceIn(this.options.lastUsedPath, ['projectId', 'version', 'lng', 'ns'], { ...this.options, lng: this.options.referenceLng, ns });
+        const url = replaceIn(this.options.lastUsedPath, ['projectId', 'version', 'lng', 'ns'], defaults$2({ lng: this.options.referenceLng, ns }, this.options));
 
         if (keys.length) {
-          request$1({ ...{ authorize: true }, ...this.options }, url, keys, doneOne);
+          request$1(defaults$2({ authorize: true }, this.options), url, keys, doneOne);
         } else {
           doneOne();
         }
