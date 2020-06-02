@@ -123,7 +123,7 @@
     }
   }
 
-  if (typeof require !== 'undefined') {
+  if (typeof require !== 'undefined' && (typeof window === 'undefined' || typeof window.document === 'undefined')) {
     var f = fetchApi || require('node-fetch');
     if (f.default) f = f.default;
     exports.default = f;
@@ -1214,7 +1214,7 @@
     }
   }
 
-  if (typeof require !== 'undefined') {
+  if (typeof require !== 'undefined' && (typeof window === 'undefined' || typeof window.document === 'undefined')) {
     var f$1 = fetchApi$2 || require('node-fetch');
     if (f$1.default) f$1 = f$1.default;
     exports.default = f$1;
