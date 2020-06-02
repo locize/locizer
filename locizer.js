@@ -1249,7 +1249,7 @@
       ActiveXObjectApi$1 = window.ActiveXObject;
     }
   }
-  if (!fetchApi$3 && fetchNode$1) fetchApi$3 = undefined || fetchNode$1; // because of strange export
+  if (!fetchApi$3 && fetchNode$1 && !XmlHttpRequestApi$1 && !ActiveXObjectApi$1) fetchApi$3 = undefined || fetchNode$1; // because of strange export
   if (typeof fetchApi$3 !== 'function') fetchApi$3 = undefined;
 
   // fetch api stuff
@@ -1291,7 +1291,7 @@
       }
       x.onreadystatechange = () => {
         const resourceNotExisting = x.getResponseHeader('x-cache') === 'Error from cloudfront';
-        x.readyState > 3 && callback(x.statusText, { status: x.status, data: x.responseText, resourceNotExisting });
+        x.readyState > 3 && callback(x.status >= 400 ? x.statusText : null, { status: x.status, data: x.responseText, resourceNotExisting });
       };
       x.send(JSON.stringify(payload));
     } catch (e) {
