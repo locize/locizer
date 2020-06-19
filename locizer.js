@@ -243,7 +243,10 @@
       setContentTypeJSON: false,
       version: 'latest',
       private: false,
+      translatedPercentageThreshold: 0.9,
+      // temporal backwards compatibility WHITELIST REMOVAL
       whitelistThreshold: 0.9,
+      // end temporal backwards compatibility WHITELIST REMOVAL
       failLoadingOnEmptyJSON: false, // useful if using chained backend
       allowedAddOrUpdateHosts: ['localhost'],
       onSaved: false,
@@ -321,6 +324,12 @@
 
     init (services, options = {}, allOptions = {}, callback) {
       this.services = services;
+      // temporal backwards compatibility WHITELIST REMOVAL
+      if (options.whitelistThreshold !== undefined && options.translatedPercentageThreshold === undefined) {
+        if (services && services.logger) services.logger.deprecate('whitelistThreshold', 'option "whitelistThreshold" will be renamed to "translatedPercentageThreshold" in the next major - please make sure to rename this option asap.');
+        options.translatedPercentageThreshold = options.whitelistThreshold;
+      }
+      // end temporal backwards compatibility WHITELIST REMOVAL
       this.options = defaults(options, this.options || {}, getDefaults());
       this.allOptions = allOptions;
       this.somethingLoaded = false;
@@ -438,12 +447,12 @@
           return mem
         }, '');
 
-        const whitelist = keys.reduce((mem, k) => {
+        const lngs = keys.reduce((mem, k) => {
           const item = data[k];
           if (
             item.translated[this.options.version] &&
             item.translated[this.options.version] >=
-              this.options.whitelistThreshold
+              this.options.translatedPercentageThreshold
           ) { mem.push(k); }
           return mem
         }, []);
@@ -456,7 +465,10 @@
         callback(null, {
           fallbackLng: referenceLng,
           referenceLng,
-          whitelist,
+          supportedLngs: lngs,
+          // temporal backwards compatibility WHITELIST REMOVAL
+          whitelist: lngs,
+          // end temporal backwards compatibility WHITELIST REMOVAL
           load: hasRegion ? 'all' : 'languageOnly'
         });
       });
@@ -929,6 +941,36 @@
     }
   };
 
+  var hasSessionStorageSupport;
+
+  try {
+    hasSessionStorageSupport = window !== 'undefined' && window.sessionStorage !== null;
+    var testKey$1 = 'i18next.translate.boo';
+    window.sessionStorage.setItem(testKey$1, 'foo');
+    window.sessionStorage.removeItem(testKey$1);
+  } catch (e) {
+    hasSessionStorageSupport = false;
+  }
+
+  var sessionStorage = {
+    name: 'sessionStorage',
+    lookup: function lookup(options) {
+      var found;
+
+      if (options.lookupsessionStorage && hasSessionStorageSupport) {
+        var lng = window.sessionStorage.getItem(options.lookupsessionStorage);
+        if (lng) found = lng;
+      }
+
+      return found;
+    },
+    cacheUserLanguage: function cacheUserLanguage(lng, options) {
+      if (options.lookupsessionStorage && hasSessionStorageSupport) {
+        window.sessionStorage.setItem(options.lookupsessionStorage, lng);
+      }
+    }
+  };
+
   var navigator$1 = {
     name: 'navigator',
     lookup: function lookup(options) {
@@ -1017,17 +1059,15 @@
 
   function getDefaults$1() {
     return {
-      order: ['querystring', 'cookie', 'localStorage', 'navigator', 'htmlTag'],
+      order: ['querystring', 'cookie', 'localStorage', 'sessionStorage', 'navigator', 'htmlTag'],
       lookupQuerystring: 'lng',
       lookupCookie: 'i18next',
       lookupLocalStorage: 'i18nextLng',
       // cache user language
       caches: ['localStorage'],
-      excludeCacheFor: ['cimode'],
-      //cookieMinutes: 10,
+      excludeCacheFor: ['cimode'] //cookieMinutes: 10,
       //cookieDomain: 'myDomain'
-      checkWhitelist: true,
-      checkForSimilarInWhitelist: false
+
     };
   }
 
@@ -1050,15 +1090,14 @@
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         var i18nOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
         this.services = services;
-        this.options = defaults$1(options, this.options || {}, getDefaults$1()); // if checking for similar, user needs to check whitelist
-
-        if (this.options.checkForSimilarInWhitelist) this.options.checkWhitelist = true; // backwards compatibility
+        this.options = defaults$1(options, this.options || {}, getDefaults$1()); // backwards compatibility
 
         if (this.options.lookupFromUrlIndex) this.options.lookupFromPathIndex = this.options.lookupFromUrlIndex;
         this.i18nOptions = i18nOptions;
         this.addDetector(cookie$1);
         this.addDetector(querystring);
         this.addDetector(localStorage);
+        this.addDetector(sessionStorage);
         this.addDetector(navigator$1);
         this.addDetector(htmlTag);
         this.addDetector(path);
@@ -1084,32 +1123,9 @@
             if (lookup) detected = detected.concat(lookup);
           }
         });
-        var found;
-        detected.forEach(function (lng) {
-          if (found) return;
+        if (this.services.languageUtils.getBestMatchFromCodes) return detected; // new i18next v19.5.0
 
-          var cleanedLng = _this.services.languageUtils.formatLanguageCode(lng);
-
-          if (!_this.options.checkWhitelist || _this.services.languageUtils.isWhitelisted(cleanedLng)) found = cleanedLng;
-
-          if (!found && _this.options.checkForSimilarInWhitelist) {
-            found = _this.getSimilarInWhitelist(cleanedLng);
-          }
-        });
-
-        if (!found) {
-          var fallbacks = this.i18nOptions.fallbackLng;
-          if (typeof fallbacks === 'string') fallbacks = [fallbacks];
-          if (!fallbacks) fallbacks = [];
-
-          if (Object.prototype.toString.apply(fallbacks) === '[object Array]') {
-            found = fallbacks[0];
-          } else {
-            found = fallbacks[0] || fallbacks["default"] && fallbacks["default"][0];
-          }
-        }
-
-        return found;
+        return detected.length > 0 ? detected[0] : null; // a little backward compatibility
       }
     }, {
       key: "cacheUserLanguage",
@@ -1122,30 +1138,6 @@
         caches.forEach(function (cacheName) {
           if (_this2.detectors[cacheName]) _this2.detectors[cacheName].cacheUserLanguage(lng, _this2.options);
         });
-      }
-    }, {
-      key: "getSimilarInWhitelist",
-      value: function getSimilarInWhitelist(cleanedLng) {
-        var _this3 = this;
-
-        if (!this.i18nOptions.whitelist) return;
-
-        if (cleanedLng.includes('-')) {
-          // i.e. es-MX should check if es is in whitelist
-          var prefix = cleanedLng.split('-')[0];
-          var cleanedPrefix = this.services.languageUtils.formatLanguageCode(prefix);
-          if (this.services.languageUtils.isWhitelisted(cleanedPrefix)) return cleanedPrefix; // if reached here, nothing found. continue to search for similar using only prefix
-
-          cleanedLng = cleanedPrefix;
-        } // i.e. 'pt' should return 'pt-BR'. If multiple in whitelist with 'pt-', then use first one in whitelist
-
-
-        var similar = this.i18nOptions.whitelist.find(function (whitelistLng) {
-          var cleanedWhitelistLng = _this3.services.languageUtils.formatLanguageCode(whitelistLng);
-
-          if (cleanedWhitelistLng.startsWith(cleanedLng)) return cleanedWhitelistLng;
-        });
-        if (similar) return similar;
       }
     }]);
 
@@ -1445,9 +1437,6 @@
   function formatLanguageCode(code) {
     return code;
   }
-  function isWhitelisted(code) {
-    return true;
-  }
   function getLanguagePartFromCode(code) {
     if (code.indexOf('-') < 0) return code;
     var specialCases = ['NB-NO', 'NN-NO', 'nb-NO', 'nn-NO', 'nb-no', 'nn-no'];
@@ -1460,8 +1449,7 @@
       interpolate: interpolate$1
     },
     languageUtils: {
-      formatLanguageCode: formatLanguageCode,
-      isWhitelisted: isWhitelisted
+      formatLanguageCode: formatLanguageCode
     }
   };
   var locizer = {

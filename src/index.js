@@ -3,15 +3,14 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import LocizeLastUsed from 'locize-lastused';
 
 import { interpolate } from './interpolator';
-import { formatLanguageCode, isWhitelisted, getLanguagePartFromCode } from './languageUtils';
+import { formatLanguageCode, getLanguagePartFromCode } from './languageUtils';
 
 const services = {
   interpolator: {
     interpolate
   },
   languageUtils: {
-    formatLanguageCode,
-    isWhitelisted
+    formatLanguageCode
   }
 }
 

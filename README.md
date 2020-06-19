@@ -64,7 +64,7 @@ Or load it from the offical npm cdn:
   // language detection options:
 
   // order and from where user language should be detected
-  order: ['querystring', 'cookie', 'localStorage', 'navigator', 'htmlTag'],
+  order: ['querystring', 'cookie', 'localStorage', 'sessionStorage', 'navigator', 'htmlTag'],
 
   // keys or params to lookup language from
   lookupQuerystring: 'lng',

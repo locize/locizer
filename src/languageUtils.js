@@ -2,10 +2,6 @@ export function formatLanguageCode(code) {
   return code;
 }
 
-export function isWhitelisted(code) {
-  return true;
-}
-
 export function getLanguagePartFromCode(code) {
   if (code.indexOf('-') < 0) return code;
 
