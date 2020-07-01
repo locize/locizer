@@ -1,3 +1,7 @@
+### v3.0.6
+
+- update dependencies
+
 ### v3.0.5
 
 - update dependencies

@@ -4,93 +4,96 @@
   (global = global || self, global.locizer = factory());
 }(this, (function () { 'use strict';
 
-  const arr = [];
-  const each = arr.forEach;
-  const slice = arr.slice;
-
-  function defaults (obj) {
-    each.call(slice.call(arguments, 1), (source) => {
+  var arr = [];
+  var each = arr.forEach;
+  var slice = arr.slice;
+  function defaults(obj) {
+    each.call(slice.call(arguments, 1), function (source) {
       if (source) {
         for (var prop in source) {
           if (obj[prop] === undefined) obj[prop] = source[prop];
         }
       }
     });
-    return obj
+    return obj;
   }
-
-  function debounce (func, wait, immediate) {
+  function debounce(func, wait, immediate) {
     var timeout;
     return function () {
-      var context = this; var args = arguments;
-      var later = function () {
+      var context = this;
+      var args = arguments;
+
+      var later = function later() {
         timeout = null;
         if (!immediate) func.apply(context, args);
       };
+
       var callNow = immediate && !timeout;
       clearTimeout(timeout);
       timeout = setTimeout(later, wait);
       if (callNow) func.apply(context, args);
-    }
+    };
   }
-  function getLastOfPath (object, path, Empty) {
-    function cleanKey (key) {
-      return (key && key.indexOf('###') > -1) ? key.replace(/###/g, '.') : key
+
+  function getLastOfPath(object, path, Empty) {
+    function cleanKey(key) {
+      return key && key.indexOf('###') > -1 ? key.replace(/###/g, '.') : key;
     }
 
-    const stack = (typeof path !== 'string') ? [].concat(path) : path.split('.');
-    while (stack.length > 1) {
-      if (!object) return {}
+    var stack = typeof path !== 'string' ? [].concat(path) : path.split('.');
 
-      const key = cleanKey(stack.shift());
+    while (stack.length > 1) {
+      if (!object) return {};
+      var key = cleanKey(stack.shift());
       if (!object[key] && Empty) object[key] = new Empty();
       object = object[key];
     }
 
-    if (!object) return {}
+    if (!object) return {};
     return {
       obj: object,
       k: cleanKey(stack.shift())
-    }
+    };
   }
 
-  function setPath (object, path, newValue) {
-    const { obj, k } = getLastOfPath(object, path, Object);
+  function setPath(object, path, newValue) {
+    var _getLastOfPath = getLastOfPath(object, path, Object),
+        obj = _getLastOfPath.obj,
+        k = _getLastOfPath.k;
 
     obj[k] = newValue;
   }
-
-  function pushPath (object, path, newValue, concat) {
-    const { obj, k } = getLastOfPath(object, path, Object);
+  function pushPath(object, path, newValue, concat) {
+    var _getLastOfPath2 = getLastOfPath(object, path, Object),
+        obj = _getLastOfPath2.obj,
+        k = _getLastOfPath2.k;
 
     obj[k] = obj[k] || [];
     if (concat) obj[k] = obj[k].concat(newValue);
     if (!concat) obj[k].push(newValue);
   }
+  function getPath(object, path) {
+    var _getLastOfPath3 = getLastOfPath(object, path),
+        obj = _getLastOfPath3.obj,
+        k = _getLastOfPath3.k;
 
-  function getPath (object, path) {
-    const { obj, k } = getLastOfPath(object, path);
+    if (!obj) return undefined;
+    return obj[k];
+  }
+  var regexp = new RegExp('{{(.+?)}}', 'g');
 
-    if (!obj) return undefined
-    return obj[k]
+  function makeString(object) {
+    if (object == null) return '';
+    return '' + object;
   }
 
-  const regexp = new RegExp('{{(.+?)}}', 'g');
+  function interpolate(str, data, lng) {
+    var match, value;
 
-  function makeString (object) {
-    if (object == null) return ''
-    return '' + object
-  }
-
-  function interpolate (str, data, lng) {
-    let match, value;
-
-    function regexSafe (val) {
-      return val.replace(/\$/g, '$$$$')
+    function regexSafe(val) {
+      return val.replace(/\$/g, '$$$$');
     }
 
-    // regular escape on demand
-    // eslint-disable-next-line no-cond-assign
     while (match = regexp.exec(str)) {
       value = match[1].trim();
       if (typeof value !== 'string') value = makeString(value);
@@ -99,19 +102,21 @@
       str = str.replace(match[0], data[value] || value);
       regexp.lastIndex = 0;
     }
-    return str
-  }
 
-  function isMissingOption (obj, props) {
-    return props.reduce((mem, p) => {
-      if (mem) return mem
+    return str;
+  }
+  function isMissingOption(obj, props) {
+    return props.reduce(function (mem, p) {
+      if (mem) return mem;
+
       if (!obj || !obj[p] || typeof obj[p] !== 'string' || !obj[p].toLowerCase() === p.toLowerCase()) {
-        const err = `i18next-locize-backend :: got "${obj[p]}" in options for ${p} which is invalid.`;
+        var err = "i18next-locize-backend :: got \"".concat(obj[p], "\" in options for ").concat(p, " which is invalid.");
         console.warn(err);
-        return err
+        return err;
       }
-      return false
-    }, false)
+
+      return false;
+    }, false);
   }
 
   var fetchApi;
@@ -134,7 +139,8 @@
     __proto__: null
   });
 
-  let fetchApi$1;
+  var fetchApi$1;
+
   if (typeof fetch === 'function') {
     if (typeof global !== 'undefined' && global.fetch) {
       fetchApi$1 = global.fetch;
@@ -142,7 +148,9 @@
       fetchApi$1 = window.fetch;
     }
   }
-  let XmlHttpRequestApi;
+
+  var XmlHttpRequestApi;
+
   if (typeof XMLHttpRequest === 'function') {
     if (typeof global !== 'undefined' && global.XMLHttpRequest) {
       XmlHttpRequestApi = global.XMLHttpRequest;
@@ -150,7 +158,9 @@
       XmlHttpRequestApi = window.XMLHttpRequest;
     }
   }
-  let ActiveXObjectApi;
+
+  var ActiveXObjectApi;
+
   if (typeof ActiveXObject === 'function') {
     if (typeof global !== 'undefined' && global.ActiveXObject) {
       ActiveXObjectApi = global.ActiveXObject;
@@ -158,11 +168,11 @@
       ActiveXObjectApi = window.ActiveXObject;
     }
   }
-  if (!fetchApi$1 && fetchNode && !XmlHttpRequestApi && !ActiveXObjectApi) fetchApi$1 = undefined || fetchNode; // because of strange export
+
+  if (!fetchApi$1 && fetchNode && !XmlHttpRequestApi && !ActiveXObjectApi) fetchApi$1 = undefined || fetchNode;
   if (typeof fetchApi$1 !== 'function') fetchApi$1 = undefined;
 
-  // fetch api stuff
-  const requestWithFetch = (options, url, payload, callback) => {
+  var requestWithFetch = function requestWithFetch(options, url, payload, callback) {
     fetchApi$1(url, {
       method: payload ? 'POST' : 'GET',
       body: payload ? JSON.stringify(payload) : undefined,
@@ -170,68 +180,85 @@
         Authorization: options.authorize && options.apiKey ? options.apiKey : undefined,
         'Content-Type': 'application/json'
       }
-    }).then((response) => {
-      const resourceNotExisting = response.headers && response.headers.get('x-cache') === 'Error from cloudfront';
-      if (!response.ok) return callback(response.statusText || 'Error', { status: response.status, resourceNotExisting })
-      response.text().then((data) => {
-        callback(null, { status: response.status, data, resourceNotExisting });
+    }).then(function (response) {
+      var resourceNotExisting = response.headers && response.headers.get('x-cache') === 'Error from cloudfront';
+      if (!response.ok) return callback(response.statusText || 'Error', {
+        status: response.status,
+        resourceNotExisting: resourceNotExisting
+      });
+      response.text().then(function (data) {
+        callback(null, {
+          status: response.status,
+          data: data,
+          resourceNotExisting: resourceNotExisting
+        });
       }).catch(callback);
     }).catch(callback);
   };
 
-  // xml http request stuff
-  const requestWithXmlHttpRequest = (options, url, payload, callback) => {
+  var requestWithXmlHttpRequest = function requestWithXmlHttpRequest(options, url, payload, callback) {
     try {
-      let x;
+      var x;
+
       if (XmlHttpRequestApi) {
         x = new XmlHttpRequestApi();
       } else {
         x = new ActiveXObjectApi('MSXML2.XMLHTTP.3.0');
       }
+
       x.open(payload ? 'POST' : 'GET', url, 1);
+
       if (!options.crossDomain) {
         x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
       }
+
       if (options.authorize && options.apiKey) {
         x.setRequestHeader('Authorization', options.apiKey);
       }
+
       if (payload || options.setContentTypeJSON) {
         x.setRequestHeader('Content-Type', 'application/json');
       }
-      x.onreadystatechange = () => {
-        const resourceNotExisting = x.getResponseHeader('x-cache') === 'Error from cloudfront';
-        x.readyState > 3 && callback(x.status >= 400 ? x.statusText : null, { status: x.status, data: x.responseText, resourceNotExisting });
+
+      x.onreadystatechange = function () {
+        var resourceNotExisting = x.getResponseHeader('x-cache') === 'Error from cloudfront';
+        x.readyState > 3 && callback(x.status >= 400 ? x.statusText : null, {
+          status: x.status,
+          data: x.responseText,
+          resourceNotExisting: resourceNotExisting
+        });
       };
+
       x.send(JSON.stringify(payload));
     } catch (e) {
       console && console.log(e);
     }
   };
 
-  const request = (options, url, payload, callback) => {
+  var request = function request(options, url, payload, callback) {
     if (typeof payload === 'function') {
       callback = payload;
       payload = undefined;
     }
-    callback = callback || (() => {});
+
+    callback = callback || function () {};
 
     if (fetchApi$1) {
-      // use fetch api
-      return requestWithFetch(options, url, payload, callback)
+      return requestWithFetch(options, url, payload, callback);
     }
 
     if (typeof XMLHttpRequest === 'function' || typeof ActiveXObject === 'function') {
-      // use xml http request
-      return requestWithXmlHttpRequest(options, url, payload, callback)
+      return requestWithXmlHttpRequest(options, url, payload, callback);
     }
-
-    // import('node-fetch').then((fetch) => {
-    //   fetchApi = fetch.default || fetch // because of strange export of node-fetch
-    //   requestWithFetch(options, url, payload, callback)
-    // }).catch(callback)
   };
 
-  const getDefaults = () => {
+  function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+  function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+  function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+  var getDefaults = function getDefaults() {
     return {
       loadPath: 'https://api.locize.app/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
       privatePath: 'https://api.locize.app/private/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
@@ -244,77 +271,95 @@
       version: 'latest',
       private: false,
       translatedPercentageThreshold: 0.9,
-      // temporal backwards compatibility WHITELIST REMOVAL
       whitelistThreshold: 0.9,
-      // end temporal backwards compatibility WHITELIST REMOVAL
-      failLoadingOnEmptyJSON: false, // useful if using chained backend
+      failLoadingOnEmptyJSON: false,
       allowedAddOrUpdateHosts: ['localhost'],
       onSaved: false,
       reloadInterval: 60 * 60 * 1000,
       checkForProjectTimeout: 3 * 1000,
       storageExpiration: 60 * 60 * 1000
-    }
+    };
   };
 
-  let hasLocalStorageSupport;
+  var hasLocalStorageSupport;
+
   try {
     hasLocalStorageSupport = typeof window !== 'undefined' && window.localStorage !== null;
-    const testKey = 'notExistingLocizeProject';
+    var testKey = 'notExistingLocizeProject';
     window.localStorage.setItem(testKey, 'foo');
     window.localStorage.removeItem(testKey);
   } catch (e) {
     hasLocalStorageSupport = false;
   }
 
-  function getStorage (storageExpiration) {
-    let setProjectNotExisting = () => {};
-    let isProjectNotExisting = () => {};
+  function getStorage(storageExpiration) {
+    var setProjectNotExisting = function setProjectNotExisting() {};
+
+    var isProjectNotExisting = function isProjectNotExisting() {};
+
     if (hasLocalStorageSupport) {
-      setProjectNotExisting = (projectId) => {
-        window.localStorage.setItem(`notExistingLocizeProject_${projectId}`, Date.now());
+      setProjectNotExisting = function setProjectNotExisting(projectId) {
+        window.localStorage.setItem("notExistingLocizeProject_".concat(projectId), Date.now());
       };
-      isProjectNotExisting = (projectId) => {
-        const ret = window.localStorage.getItem(`notExistingLocizeProject_${projectId}`);
-        if (!ret) return false
+
+      isProjectNotExisting = function isProjectNotExisting(projectId) {
+        var ret = window.localStorage.getItem("notExistingLocizeProject_".concat(projectId));
+        if (!ret) return false;
+
         if (Date.now() - ret > storageExpiration) {
-          window.localStorage.removeItem(`notExistingLocizeProject_${projectId}`);
-          return false
+          window.localStorage.removeItem("notExistingLocizeProject_".concat(projectId));
+          return false;
         }
-        return true
+
+        return true;
       };
     } else if (typeof document !== 'undefined') {
-      setProjectNotExisting = (projectId) => {
-        const date = new Date();
+      setProjectNotExisting = function setProjectNotExisting(projectId) {
+        var date = new Date();
         date.setTime(date.getTime() + storageExpiration);
-        const expires = `; expires=${date.toGMTString()}`;
-        const name = `notExistingLocizeProject_${projectId}`;
-        document.cookie = `${name}=${Date.now()}${expires};path=/`;
+        var expires = "; expires=".concat(date.toGMTString());
+        var name = "notExistingLocizeProject_".concat(projectId);
+        document.cookie = "".concat(name, "=").concat(Date.now()).concat(expires, ";path=/");
       };
-      isProjectNotExisting = (projectId) => {
-        const name = `notExistingLocizeProject_${projectId}`;
-        const nameEQ = `${name}=`;
-        const ca = document.cookie.split(';');
-        for (let i = 0; i < ca.length; i++) {
-          let c = ca[i];
-          while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-          if (c.indexOf(nameEQ) === 0) return true // return c.substring(nameEQ.length,c.length);
+
+      isProjectNotExisting = function isProjectNotExisting(projectId) {
+        var name = "notExistingLocizeProject_".concat(projectId);
+        var nameEQ = "".concat(name, "=");
+        var ca = document.cookie.split(';');
+
+        for (var i = 0; i < ca.length; i++) {
+          var c = ca[i];
+
+          while (c.charAt(0) === ' ') {
+            c = c.substring(1, c.length);
+          }
+
+          if (c.indexOf(nameEQ) === 0) return true;
         }
-        return false
+
+        return false;
       };
     }
 
     return {
-      setProjectNotExisting,
-      isProjectNotExisting
-    }
+      setProjectNotExisting: setProjectNotExisting,
+      isProjectNotExisting: isProjectNotExisting
+    };
   }
 
-  class I18NextLocizeBackend {
-    constructor (services, options = {}, allOptions = {}, callback) {
+  var I18NextLocizeBackend = function () {
+    function I18NextLocizeBackend(services) {
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var allOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      var callback = arguments.length > 3 ? arguments[3] : undefined;
+
+      _classCallCheck(this, I18NextLocizeBackend);
+
       this.services = services;
       this.options = options;
       this.allOptions = allOptions;
       this.type = 'backend';
+
       if (services && services.projectId) {
         this.init(null, services, allOptions, options);
       } else {
@@ -322,480 +367,519 @@
       }
     }
 
-    init (services, options = {}, allOptions = {}, callback) {
-      this.services = services;
-      // temporal backwards compatibility WHITELIST REMOVAL
-      if (options.whitelistThreshold !== undefined && options.translatedPercentageThreshold === undefined) {
-        if (services && services.logger) services.logger.deprecate('whitelistThreshold', 'option "whitelistThreshold" will be renamed to "translatedPercentageThreshold" in the next major - please make sure to rename this option asap.');
-        options.translatedPercentageThreshold = options.whitelistThreshold;
-      }
-      // end temporal backwards compatibility WHITELIST REMOVAL
-      this.options = defaults(options, this.options || {}, getDefaults());
-      this.allOptions = allOptions;
-      this.somethingLoaded = false;
-      this.isProjectNotExisting = false;
-      this.storage = getStorage(this.options.storageExpiration);
+    _createClass(I18NextLocizeBackend, [{
+      key: "init",
+      value: function init(services) {
+        var _this = this;
 
-      if (this.options.pull) {
-        console.warn(
-          'The pull API was removed use "private: true" option instead: https://docs.locize.com/integration/api#fetch-private-namespace-resources'
-        );
-      }
+        var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+        var allOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+        var callback = arguments.length > 3 ? arguments[3] : undefined;
+        this.services = services;
 
-      const hostname = typeof window !== 'undefined' && window.location && window.location.hostname;
-      if (hostname) {
-        this.isAddOrUpdateAllowed = typeof this.options.allowedAddOrUpdateHosts === 'function' ? this.options.allowedAddOrUpdateHosts(hostname) : this.options.allowedAddOrUpdateHosts.indexOf(hostname) > -1;
-
-        if (services && services.logger && (allOptions.saveMissing || allOptions.updateMissing)) {
-          if (!this.isAddOrUpdateAllowed) {
-            services.logger.warn(
-              typeof this.options.allowedAddOrUpdateHosts === 'function'
-                ? `locize-backend: will not save or update missings because allowedAddOrUpdateHosts returned false for the host "${hostname}".`
-                : `locize-backend: will not save or update missings because the host "${hostname}" was not in the list of allowedAddOrUpdateHosts: ${this.options.allowedAddOrUpdateHosts.join(
-                ', '
-              )} (matches need to be exact).`
-            );
-          } else if (hostname !== 'localhost') {
-            services.logger.warn(`locize-backend: you are using the save or update missings feature from this host "${hostname}".\nMake sure you will not use it in production!\nhttps://docs.locize.com/guides-tips-and-tricks/going-production`);
-          }
-        }
-      } else {
-        this.isAddOrUpdateAllowed = true;
-      }
-
-      if (typeof callback === 'function') {
-        this.getOptions((err, opts) => {
-          if (err) return callback(err)
-          this.options.referenceLng = options.referenceLng || opts.referenceLng || this.options.referenceLng;
-          callback(null, opts);
-        });
-      }
-
-      this.queuedWrites = { pending: {} };
-      this.debouncedProcess = debounce(this.process, 10000);
-
-      if (this.interval) clearInterval(this.interval);
-      if (this.options.reloadInterval) {
-        this.interval = setInterval(() => this.reload(), this.options.reloadInterval);
-      }
-    }
-
-    reload () {
-      const { backendConnector, languageUtils, logger } = this.services;
-      if (!backendConnector) return
-      const currentLanguage = backendConnector.language;
-      if (currentLanguage && currentLanguage.toLowerCase() === 'cimode') return // avoid loading resources for cimode
-
-      const toLoad = [];
-      const append = (lng) => {
-        const lngs = languageUtils.toResolveHierarchy(lng);
-        lngs.forEach(l => {
-          if (toLoad.indexOf(l) < 0) toLoad.push(l);
-        });
-      };
-
-      append(currentLanguage);
-
-      if (this.allOptions.preload) this.allOptions.preload.forEach((l) => append(l));
-
-      toLoad.forEach(lng => {
-        this.allOptions.ns.forEach(ns => {
-          backendConnector.read(lng, ns, 'read', null, null, (err, data) => {
-            if (err) logger.warn(`loading namespace ${ns} for language ${lng} failed`, err);
-            if (!err && data) logger.log(`loaded namespace ${ns} for language ${lng}`, data);
-
-            backendConnector.loaded(`${lng}|${ns}`, err, data);
-          });
-        });
-      });
-    }
-
-    getLanguages (callback) {
-      const isMissing = isMissingOption(this.options, ['projectId']);
-      if (isMissing) return callback(new Error(isMissing))
-
-      const url = interpolate(this.options.getLanguagesPath, {
-        projectId: this.options.projectId
-      });
-
-      if (!this.isProjectNotExisting && this.storage.isProjectNotExisting(this.options.projectId)) {
-        this.isProjectNotExisting = true;
-      }
-
-      if (this.isProjectNotExisting) return callback(new Error(`locize project ${this.options.projectId} does not exist!`))
-
-      this.loadUrl({}, url, (err, ret, info) => {
-        if (!this.somethingLoaded && info && info.resourceNotExisting) {
-          this.isProjectNotExisting = true;
-          this.storage.setProjectNotExisting(this.options.projectId);
-          return callback(new Error(`locize project ${this.options.projectId} does not exist!`))
-        }
-        this.somethingLoaded = true;
-        callback(err, ret);
-      });
-    }
-
-    getOptions (callback) {
-      this.getLanguages((err, data) => {
-        if (err) return callback(err)
-        const keys = Object.keys(data);
-        if (!keys.length) { return callback(new Error('was unable to load languages via API')) }
-
-        const referenceLng = keys.reduce((mem, k) => {
-          const item = data[k];
-          if (item.isReferenceLanguage) mem = k;
-          return mem
-        }, '');
-
-        const lngs = keys.reduce((mem, k) => {
-          const item = data[k];
-          if (
-            item.translated[this.options.version] &&
-            item.translated[this.options.version] >=
-              this.options.translatedPercentageThreshold
-          ) { mem.push(k); }
-          return mem
-        }, []);
-
-        const hasRegion = keys.reduce((mem, k) => {
-          if (k.indexOf('-') > -1) return true
-          return mem
-        }, false);
-
-        callback(null, {
-          fallbackLng: referenceLng,
-          referenceLng,
-          supportedLngs: lngs,
-          // temporal backwards compatibility WHITELIST REMOVAL
-          whitelist: lngs,
-          // end temporal backwards compatibility WHITELIST REMOVAL
-          load: hasRegion ? 'all' : 'languageOnly'
-        });
-      });
-    }
-
-    checkIfProjectExists (callback) {
-      const { logger } = this.services;
-      if (this.somethingLoaded) {
-        if (callback) callback(null);
-        return
-      }
-      if (this.alreadyRequestedCheckIfProjectExists) {
-        setTimeout(() => this.checkIfProjectExists(callback), this.options.checkForProjectTimeout);
-        return
-      }
-      this.alreadyRequestedCheckIfProjectExists = true;
-      this.getLanguages((err) => {
-        if (err && err.message && err.message.indexOf('does not exist') > 0) {
-          if (logger) logger.error(err.message);
-        }
-        if (callback) callback(err);
-      });
-    }
-
-    read (language, namespace, callback) {
-      const { logger } = this.services || { logger: console };
-      let url;
-      let options = {};
-      if (this.options.private) {
-        const isMissing = isMissingOption(this.options, ['projectId', 'version', 'apiKey']);
-        if (isMissing) return callback(new Error(isMissing), false)
-
-        url = interpolate(this.options.privatePath, {
-          lng: language,
-          ns: namespace,
-          projectId: this.options.projectId,
-          version: this.options.version
-        });
-        options = { authorize: true };
-      } else {
-        const isMissing = isMissingOption(this.options, ['projectId', 'version']);
-        if (isMissing) return callback(new Error(isMissing), false)
-
-        url = interpolate(this.options.loadPath, {
-          lng: language,
-          ns: namespace,
-          projectId: this.options.projectId,
-          version: this.options.version
-        });
-      }
-
-      if (!this.isProjectNotExisting && this.storage.isProjectNotExisting(this.options.projectId)) {
-        this.isProjectNotExisting = true;
-      }
-
-      if (this.isProjectNotExisting) {
-        const err = new Error(`locize project ${this.options.projectId} does not exist!`);
-        if (logger) logger.error(err.message);
-        if (callback) callback(err);
-        return
-      }
-
-      this.loadUrl(options, url, (err, ret, info) => {
-        if (!this.somethingLoaded) {
-          if (info && info.resourceNotExisting) {
-            setTimeout(() => this.checkIfProjectExists(), this.options.checkForProjectTimeout);
-          } else {
-            this.somethingLoaded = true;
-          }
-        }
-        callback(err, ret);
-      });
-    }
-
-    loadUrl (options, url, payload, callback) {
-      options = defaults(options, this.options);
-      if (typeof payload === 'function') {
-        callback = payload;
-        payload = undefined;
-      }
-      callback = callback || (() => {});
-      request(options, url, payload, (err, res) => {
-        const resourceNotExisting = res && res.resourceNotExisting;
-
-        if (res && (res.status === 408 || res.status === 400)) { // extras for timeouts on cloudfront
-          return callback('failed loading ' + url, true /* retry */, { resourceNotExisting })
-        }
-        if (res && res.status >= 500 && res.status < 600) { return callback('failed loading ' + url, true /* retry */, { resourceNotExisting }) }
-        if (res && res.status >= 400 && res.status < 500) { return callback('failed loading ' + url, false /* no retry */, { resourceNotExisting }) }
-        if (err) return callback(err, false)
-
-        let ret, parseErr;
-        try {
-          ret = JSON.parse(res.data);
-        } catch (e) {
-          parseErr = 'failed parsing ' + url + ' to json';
-        }
-        if (parseErr) return callback(parseErr, false)
-        if (this.options.failLoadingOnEmptyJSON && !Object.keys(ret).length) { return callback('loaded result empty for ' + url, false, { resourceNotExisting }) }
-        callback(null, ret, { resourceNotExisting });
-      });
-    }
-
-    create (languages, namespace, key, fallbackValue, callback, options) {
-      if (!callback) callback = () => {};
-
-      this.checkIfProjectExists((err) => {
-        if (err) return callback(err)
-
-        // missing options
-        const isMissing = isMissingOption(this.options, ['projectId', 'version', 'apiKey', 'referenceLng']);
-        if (isMissing) return callback(new Error(isMissing))
-
-        // unallowed host
-        if (!this.isAddOrUpdateAllowed) { return callback('host is not allowed to create key.') }
-
-        if (typeof languages === 'string') languages = [languages];
-
-        if (languages.filter(l => l === this.options.referenceLng).length < 1) {
-          this.services &&
-            this.services.logger &&
-            this.services.logger.warn(
-              `locize-backend: will not save missings because the reference language "${
-              this.options.referenceLng
-            }" was not in the list of to save languages: ${languages.join(
-              ', '
-            )} (open your site in the reference language to save missings).`
-            );
+        if (options.whitelistThreshold !== undefined && options.translatedPercentageThreshold === undefined) {
+          if (services && services.logger) services.logger.deprecate('whitelistThreshold', 'option "whitelistThreshold" will be renamed to "translatedPercentageThreshold" in the next major - please make sure to rename this option asap.');
+          options.translatedPercentageThreshold = options.whitelistThreshold;
         }
 
-        languages.forEach(lng => {
-          if (lng === this.options.referenceLng) {
-            // eslint-disable-next-line no-useless-call
-            this.queue.call(
-              this,
-              this.options.referenceLng,
-              namespace,
-              key,
-              fallbackValue,
-              callback,
-              options
-            );
-          }
-        });
-      });
-    }
+        this.options = defaults(options, this.options || {}, getDefaults());
+        this.allOptions = allOptions;
+        this.somethingLoaded = false;
+        this.isProjectNotExisting = false;
+        this.storage = getStorage(this.options.storageExpiration);
 
-    update (languages, namespace, key, fallbackValue, callback, options) {
-      if (!callback) callback = () => {};
+        if (this.options.pull) {
+          console.warn('The pull API was removed use "private: true" option instead: https://docs.locize.com/integration/api#fetch-private-namespace-resources');
+        }
 
-      this.checkIfProjectExists((err) => {
-        if (err) return callback(err)
+        var hostname = typeof window !== 'undefined' && window.location && window.location.hostname;
 
-        // missing options
-        const isMissing = isMissingOption(this.options, ['projectId', 'version', 'apiKey', 'referenceLng']);
-        if (isMissing) return callback(new Error(isMissing))
+        if (hostname) {
+          this.isAddOrUpdateAllowed = typeof this.options.allowedAddOrUpdateHosts === 'function' ? this.options.allowedAddOrUpdateHosts(hostname) : this.options.allowedAddOrUpdateHosts.indexOf(hostname) > -1;
 
-        if (!this.isAddOrUpdateAllowed) { return callback('host is not allowed to update key.') }
-
-        if (!options) options = {};
-        if (typeof languages === 'string') languages = [languages];
-
-        // mark as update
-        options.isUpdate = true;
-
-        languages.forEach(lng => {
-          if (lng === this.options.referenceLng) {
-            // eslint-disable-next-line no-useless-call
-            this.queue.call(
-              this,
-              this.options.referenceLng,
-              namespace,
-              key,
-              fallbackValue,
-              callback,
-              options
-            );
-          }
-        });
-      });
-    }
-
-    writePage (lng, namespace, missings, callback) {
-      const missingUrl = interpolate(this.options.addPath, {
-        lng: lng,
-        ns: namespace,
-        projectId: this.options.projectId,
-        version: this.options.version
-      });
-      const updatesUrl = interpolate(this.options.updatePath, {
-        lng: lng,
-        ns: namespace,
-        projectId: this.options.projectId,
-        version: this.options.version
-      });
-
-      let hasMissing = false;
-      let hasUpdates = false;
-      const payloadMissing = {};
-      const payloadUpdate = {};
-
-      missings.forEach(item => {
-        const value =
-          item.options && item.options.tDescription
-            ? {
-              value: item.fallbackValue || '',
-              context: { text: item.options.tDescription }
+          if (services && services.logger && (allOptions.saveMissing || allOptions.updateMissing)) {
+            if (!this.isAddOrUpdateAllowed) {
+              services.logger.warn(typeof this.options.allowedAddOrUpdateHosts === 'function' ? "locize-backend: will not save or update missings because allowedAddOrUpdateHosts returned false for the host \"".concat(hostname, "\".") : "locize-backend: will not save or update missings because the host \"".concat(hostname, "\" was not in the list of allowedAddOrUpdateHosts: ").concat(this.options.allowedAddOrUpdateHosts.join(', '), " (matches need to be exact)."));
+            } else if (hostname !== 'localhost') {
+              services.logger.warn("locize-backend: you are using the save or update missings feature from this host \"".concat(hostname, "\".\nMake sure you will not use it in production!\nhttps://docs.locize.com/guides-tips-and-tricks/going-production"));
             }
-            : item.fallbackValue || '';
-        if (item.options && item.options.isUpdate) {
-          if (!hasUpdates) hasUpdates = true;
-          payloadUpdate[item.key] = value;
+          }
         } else {
-          if (!hasMissing) hasMissing = true;
-          payloadMissing[item.key] = value;
+          this.isAddOrUpdateAllowed = true;
         }
-      });
 
-      let todo = 0;
-      if (hasMissing) todo++;
-      if (hasUpdates) todo++;
-      const doneOne = (err) => {
-        todo--;
-        if (!todo) callback(err);
-      };
-
-      if (!todo) doneOne();
-
-      if (hasMissing) {
-        request(
-          defaults({ authorize: true }, this.options),
-          missingUrl,
-          payloadMissing,
-          doneOne
-        );
-      }
-
-      if (hasUpdates) {
-        request(
-          defaults({ authorize: true }, this.options),
-          updatesUrl,
-          payloadUpdate,
-          doneOne
-        );
-      }
-    }
-
-    write (lng, namespace) {
-      const lock = getPath(this.queuedWrites, ['locks', lng, namespace]);
-      if (lock) return
-
-      const missings = getPath(this.queuedWrites, [lng, namespace]);
-      setPath(this.queuedWrites, [lng, namespace], []);
-      const pageSize = 1000;
-
-      if (missings.length) {
-        // lock
-        setPath(this.queuedWrites, ['locks', lng, namespace], true);
-
-        const namespaceSaved = () => {
-          // unlock
-          setPath(this.queuedWrites, ['locks', lng, namespace], false);
-
-          missings.forEach(missing => {
-            if (missing.callback) missing.callback();
+        if (typeof callback === 'function') {
+          this.getOptions(function (err, opts) {
+            if (err) return callback(err);
+            _this.options.referenceLng = options.referenceLng || opts.referenceLng || _this.options.referenceLng;
+            callback(null, opts);
           });
+        }
 
-          // emit notification onSaved
-          if (this.options.onSaved) this.options.onSaved(lng, namespace);
+        this.queuedWrites = {
+          pending: {}
+        };
+        this.debouncedProcess = debounce(this.process, 10000);
+        if (this.interval) clearInterval(this.interval);
 
-          // rerun
-          this.debouncedProcess(lng, namespace);
+        if (this.options.reloadInterval) {
+          this.interval = setInterval(function () {
+            return _this.reload();
+          }, this.options.reloadInterval);
+        }
+      }
+    }, {
+      key: "reload",
+      value: function reload() {
+        var _this2 = this;
+
+        var _this$services = this.services,
+            backendConnector = _this$services.backendConnector,
+            languageUtils = _this$services.languageUtils,
+            logger = _this$services.logger;
+        if (!backendConnector) return;
+        var currentLanguage = backendConnector.language;
+        if (currentLanguage && currentLanguage.toLowerCase() === 'cimode') return;
+        var toLoad = [];
+
+        var append = function append(lng) {
+          var lngs = languageUtils.toResolveHierarchy(lng);
+          lngs.forEach(function (l) {
+            if (toLoad.indexOf(l) < 0) toLoad.push(l);
+          });
         };
 
-        const amountOfPages = missings.length / pageSize;
-        let pagesDone = 0;
-
-        let page = missings.splice(0, pageSize);
-        this.writePage(lng, namespace, page, () => {
-          pagesDone++;
-          if (pagesDone >= amountOfPages) namespaceSaved();
+        append(currentLanguage);
+        if (this.allOptions.preload) this.allOptions.preload.forEach(function (l) {
+          return append(l);
         });
-        while (page.length === pageSize) {
-          page = missings.splice(0, pageSize);
-          if (page.length) {
-            this.writePage(lng, namespace, page, () => {
+        toLoad.forEach(function (lng) {
+          _this2.allOptions.ns.forEach(function (ns) {
+            backendConnector.read(lng, ns, 'read', null, null, function (err, data) {
+              if (err) logger.warn("loading namespace ".concat(ns, " for language ").concat(lng, " failed"), err);
+              if (!err && data) logger.log("loaded namespace ".concat(ns, " for language ").concat(lng), data);
+              backendConnector.loaded("".concat(lng, "|").concat(ns), err, data);
+            });
+          });
+        });
+      }
+    }, {
+      key: "getLanguages",
+      value: function getLanguages(callback) {
+        var _this3 = this;
+
+        var isMissing = isMissingOption(this.options, ['projectId']);
+        if (isMissing) return callback(new Error(isMissing));
+        var url = interpolate(this.options.getLanguagesPath, {
+          projectId: this.options.projectId
+        });
+
+        if (!this.isProjectNotExisting && this.storage.isProjectNotExisting(this.options.projectId)) {
+          this.isProjectNotExisting = true;
+        }
+
+        if (this.isProjectNotExisting) return callback(new Error("locize project ".concat(this.options.projectId, " does not exist!")));
+        this.loadUrl({}, url, function (err, ret, info) {
+          if (!_this3.somethingLoaded && info && info.resourceNotExisting) {
+            _this3.isProjectNotExisting = true;
+
+            _this3.storage.setProjectNotExisting(_this3.options.projectId);
+
+            return callback(new Error("locize project ".concat(_this3.options.projectId, " does not exist!")));
+          }
+
+          _this3.somethingLoaded = true;
+          callback(err, ret);
+        });
+      }
+    }, {
+      key: "getOptions",
+      value: function getOptions(callback) {
+        var _this4 = this;
+
+        this.getLanguages(function (err, data) {
+          if (err) return callback(err);
+          var keys = Object.keys(data);
+
+          if (!keys.length) {
+            return callback(new Error('was unable to load languages via API'));
+          }
+
+          var referenceLng = keys.reduce(function (mem, k) {
+            var item = data[k];
+            if (item.isReferenceLanguage) mem = k;
+            return mem;
+          }, '');
+          var lngs = keys.reduce(function (mem, k) {
+            var item = data[k];
+
+            if (item.translated[_this4.options.version] && item.translated[_this4.options.version] >= _this4.options.translatedPercentageThreshold) {
+              mem.push(k);
+            }
+
+            return mem;
+          }, []);
+          var hasRegion = keys.reduce(function (mem, k) {
+            if (k.indexOf('-') > -1) return true;
+            return mem;
+          }, false);
+          callback(null, {
+            fallbackLng: referenceLng,
+            referenceLng: referenceLng,
+            supportedLngs: lngs,
+            whitelist: lngs,
+            load: hasRegion ? 'all' : 'languageOnly'
+          });
+        });
+      }
+    }, {
+      key: "checkIfProjectExists",
+      value: function checkIfProjectExists(callback) {
+        var _this5 = this;
+
+        var logger = this.services.logger;
+
+        if (this.somethingLoaded) {
+          if (callback) callback(null);
+          return;
+        }
+
+        if (this.alreadyRequestedCheckIfProjectExists) {
+          setTimeout(function () {
+            return _this5.checkIfProjectExists(callback);
+          }, this.options.checkForProjectTimeout);
+          return;
+        }
+
+        this.alreadyRequestedCheckIfProjectExists = true;
+        this.getLanguages(function (err) {
+          if (err && err.message && err.message.indexOf('does not exist') > 0) {
+            if (logger) logger.error(err.message);
+          }
+
+          if (callback) callback(err);
+        });
+      }
+    }, {
+      key: "read",
+      value: function read(language, namespace, callback) {
+        var _this6 = this;
+
+        var _ref = this.services || {
+          logger: console
+        },
+            logger = _ref.logger;
+
+        var url;
+        var options = {};
+
+        if (this.options.private) {
+          var isMissing = isMissingOption(this.options, ['projectId', 'version', 'apiKey']);
+          if (isMissing) return callback(new Error(isMissing), false);
+          url = interpolate(this.options.privatePath, {
+            lng: language,
+            ns: namespace,
+            projectId: this.options.projectId,
+            version: this.options.version
+          });
+          options = {
+            authorize: true
+          };
+        } else {
+          var _isMissing = isMissingOption(this.options, ['projectId', 'version']);
+
+          if (_isMissing) return callback(new Error(_isMissing), false);
+          url = interpolate(this.options.loadPath, {
+            lng: language,
+            ns: namespace,
+            projectId: this.options.projectId,
+            version: this.options.version
+          });
+        }
+
+        if (!this.isProjectNotExisting && this.storage.isProjectNotExisting(this.options.projectId)) {
+          this.isProjectNotExisting = true;
+        }
+
+        if (this.isProjectNotExisting) {
+          var err = new Error("locize project ".concat(this.options.projectId, " does not exist!"));
+          if (logger) logger.error(err.message);
+          if (callback) callback(err);
+          return;
+        }
+
+        this.loadUrl(options, url, function (err, ret, info) {
+          if (!_this6.somethingLoaded) {
+            if (info && info.resourceNotExisting) {
+              setTimeout(function () {
+                return _this6.checkIfProjectExists();
+              }, _this6.options.checkForProjectTimeout);
+            } else {
+              _this6.somethingLoaded = true;
+            }
+          }
+
+          callback(err, ret);
+        });
+      }
+    }, {
+      key: "loadUrl",
+      value: function loadUrl(options, url, payload, callback) {
+        var _this7 = this;
+
+        options = defaults(options, this.options);
+
+        if (typeof payload === 'function') {
+          callback = payload;
+          payload = undefined;
+        }
+
+        callback = callback || function () {};
+
+        request(options, url, payload, function (err, res) {
+          var resourceNotExisting = res && res.resourceNotExisting;
+
+          if (res && (res.status === 408 || res.status === 400)) {
+            return callback('failed loading ' + url, true, {
+              resourceNotExisting: resourceNotExisting
+            });
+          }
+
+          if (res && res.status >= 500 && res.status < 600) {
+            return callback('failed loading ' + url, true, {
+              resourceNotExisting: resourceNotExisting
+            });
+          }
+
+          if (res && res.status >= 400 && res.status < 500) {
+            return callback('failed loading ' + url, false, {
+              resourceNotExisting: resourceNotExisting
+            });
+          }
+
+          if (err) return callback(err, false);
+          var ret, parseErr;
+
+          try {
+            ret = JSON.parse(res.data);
+          } catch (e) {
+            parseErr = 'failed parsing ' + url + ' to json';
+          }
+
+          if (parseErr) return callback(parseErr, false);
+
+          if (_this7.options.failLoadingOnEmptyJSON && !Object.keys(ret).length) {
+            return callback('loaded result empty for ' + url, false, {
+              resourceNotExisting: resourceNotExisting
+            });
+          }
+
+          callback(null, ret, {
+            resourceNotExisting: resourceNotExisting
+          });
+        });
+      }
+    }, {
+      key: "create",
+      value: function create(languages, namespace, key, fallbackValue, callback, options) {
+        var _this8 = this;
+
+        if (!callback) callback = function callback() {};
+        this.checkIfProjectExists(function (err) {
+          if (err) return callback(err);
+          var isMissing = isMissingOption(_this8.options, ['projectId', 'version', 'apiKey', 'referenceLng']);
+          if (isMissing) return callback(new Error(isMissing));
+
+          if (!_this8.isAddOrUpdateAllowed) {
+            return callback('host is not allowed to create key.');
+          }
+
+          if (typeof languages === 'string') languages = [languages];
+
+          if (languages.filter(function (l) {
+            return l === _this8.options.referenceLng;
+          }).length < 1) {
+            _this8.services && _this8.services.logger && _this8.services.logger.warn("locize-backend: will not save missings because the reference language \"".concat(_this8.options.referenceLng, "\" was not in the list of to save languages: ").concat(languages.join(', '), " (open your site in the reference language to save missings)."));
+          }
+
+          languages.forEach(function (lng) {
+            if (lng === _this8.options.referenceLng) {
+              _this8.queue.call(_this8, _this8.options.referenceLng, namespace, key, fallbackValue, callback, options);
+            }
+          });
+        });
+      }
+    }, {
+      key: "update",
+      value: function update(languages, namespace, key, fallbackValue, callback, options) {
+        var _this9 = this;
+
+        if (!callback) callback = function callback() {};
+        this.checkIfProjectExists(function (err) {
+          if (err) return callback(err);
+          var isMissing = isMissingOption(_this9.options, ['projectId', 'version', 'apiKey', 'referenceLng']);
+          if (isMissing) return callback(new Error(isMissing));
+
+          if (!_this9.isAddOrUpdateAllowed) {
+            return callback('host is not allowed to update key.');
+          }
+
+          if (!options) options = {};
+          if (typeof languages === 'string') languages = [languages];
+          options.isUpdate = true;
+          languages.forEach(function (lng) {
+            if (lng === _this9.options.referenceLng) {
+              _this9.queue.call(_this9, _this9.options.referenceLng, namespace, key, fallbackValue, callback, options);
+            }
+          });
+        });
+      }
+    }, {
+      key: "writePage",
+      value: function writePage(lng, namespace, missings, callback) {
+        var missingUrl = interpolate(this.options.addPath, {
+          lng: lng,
+          ns: namespace,
+          projectId: this.options.projectId,
+          version: this.options.version
+        });
+        var updatesUrl = interpolate(this.options.updatePath, {
+          lng: lng,
+          ns: namespace,
+          projectId: this.options.projectId,
+          version: this.options.version
+        });
+        var hasMissing = false;
+        var hasUpdates = false;
+        var payloadMissing = {};
+        var payloadUpdate = {};
+        missings.forEach(function (item) {
+          var value = item.options && item.options.tDescription ? {
+            value: item.fallbackValue || '',
+            context: {
+              text: item.options.tDescription
+            }
+          } : item.fallbackValue || '';
+
+          if (item.options && item.options.isUpdate) {
+            if (!hasUpdates) hasUpdates = true;
+            payloadUpdate[item.key] = value;
+          } else {
+            if (!hasMissing) hasMissing = true;
+            payloadMissing[item.key] = value;
+          }
+        });
+        var todo = 0;
+        if (hasMissing) todo++;
+        if (hasUpdates) todo++;
+
+        var doneOne = function doneOne(err) {
+          todo--;
+          if (!todo) callback(err);
+        };
+
+        if (!todo) doneOne();
+
+        if (hasMissing) {
+          request(defaults({
+            authorize: true
+          }, this.options), missingUrl, payloadMissing, doneOne);
+        }
+
+        if (hasUpdates) {
+          request(defaults({
+            authorize: true
+          }, this.options), updatesUrl, payloadUpdate, doneOne);
+        }
+      }
+    }, {
+      key: "write",
+      value: function write(lng, namespace) {
+        var _this10 = this;
+
+        var lock = getPath(this.queuedWrites, ['locks', lng, namespace]);
+        if (lock) return;
+        var missings = getPath(this.queuedWrites, [lng, namespace]);
+        setPath(this.queuedWrites, [lng, namespace], []);
+        var pageSize = 1000;
+
+        if (missings.length) {
+          (function () {
+            setPath(_this10.queuedWrites, ['locks', lng, namespace], true);
+
+            var namespaceSaved = function namespaceSaved() {
+              setPath(_this10.queuedWrites, ['locks', lng, namespace], false);
+              missings.forEach(function (missing) {
+                if (missing.callback) missing.callback();
+              });
+              if (_this10.options.onSaved) _this10.options.onSaved(lng, namespace);
+
+              _this10.debouncedProcess(lng, namespace);
+            };
+
+            var amountOfPages = missings.length / pageSize;
+            var pagesDone = 0;
+            var page = missings.splice(0, pageSize);
+
+            _this10.writePage(lng, namespace, page, function () {
               pagesDone++;
               if (pagesDone >= amountOfPages) namespaceSaved();
             });
-          }
+
+            while (page.length === pageSize) {
+              page = missings.splice(0, pageSize);
+
+              if (page.length) {
+                _this10.writePage(lng, namespace, page, function () {
+                  pagesDone++;
+                  if (pagesDone >= amountOfPages) namespaceSaved();
+                });
+              }
+            }
+          })();
         }
       }
-    }
+    }, {
+      key: "process",
+      value: function process() {
+        var _this11 = this;
 
-    process () {
-      Object.keys(this.queuedWrites).forEach(lng => {
-        if (lng === 'locks') return
-        Object.keys(this.queuedWrites[lng]).forEach(ns => {
-          const todo = this.queuedWrites[lng][ns];
-          if (todo.length) {
-            this.write(lng, ns);
-          }
+        Object.keys(this.queuedWrites).forEach(function (lng) {
+          if (lng === 'locks') return;
+          Object.keys(_this11.queuedWrites[lng]).forEach(function (ns) {
+            var todo = _this11.queuedWrites[lng][ns];
+
+            if (todo.length) {
+              _this11.write(lng, ns);
+            }
+          });
         });
-      });
-    }
+      }
+    }, {
+      key: "queue",
+      value: function queue(lng, namespace, key, fallbackValue, callback, options) {
+        pushPath(this.queuedWrites, [lng, namespace], {
+          key: key,
+          fallbackValue: fallbackValue || '',
+          callback: callback,
+          options: options
+        });
+        this.debouncedProcess();
+      }
+    }]);
 
-    queue (lng, namespace, key, fallbackValue, callback, options) {
-      pushPath(this.queuedWrites, [lng, namespace], {
-        key: key,
-        fallbackValue: fallbackValue || '',
-        callback: callback,
-        options
-      });
-
-      this.debouncedProcess();
-    }
-  }
+    return I18NextLocizeBackend;
+  }();
 
   I18NextLocizeBackend.type = 'backend';
 
-  function _classCallCheck(instance, Constructor) {
+  function _classCallCheck$1(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
     }
   }
 
-  function _defineProperties(target, props) {
+  function _defineProperties$1(target, props) {
     for (var i = 0; i < props.length; i++) {
       var descriptor = props[i];
       descriptor.enumerable = descriptor.enumerable || false;
@@ -805,9 +889,9 @@
     }
   }
 
-  function _createClass(Constructor, protoProps, staticProps) {
-    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) _defineProperties(Constructor, staticProps);
+  function _createClass$1(Constructor, protoProps, staticProps) {
+    if (protoProps) _defineProperties$1(Constructor.prototype, protoProps);
+    if (staticProps) _defineProperties$1(Constructor, staticProps);
     return Constructor;
   }
 
@@ -915,9 +999,9 @@
 
   try {
     hasLocalStorageSupport$1 = window !== 'undefined' && window.localStorage !== null;
-    var testKey = 'i18next.translate.boo';
-    window.localStorage.setItem(testKey, 'foo');
-    window.localStorage.removeItem(testKey);
+    var testKey$1 = 'i18next.translate.boo';
+    window.localStorage.setItem(testKey$1, 'foo');
+    window.localStorage.removeItem(testKey$1);
   } catch (e) {
     hasLocalStorageSupport$1 = false;
   }
@@ -945,9 +1029,9 @@
 
   try {
     hasSessionStorageSupport = window !== 'undefined' && window.sessionStorage !== null;
-    var testKey$1 = 'i18next.translate.boo';
-    window.sessionStorage.setItem(testKey$1, 'foo');
-    window.sessionStorage.removeItem(testKey$1);
+    var testKey$1$1 = 'i18next.translate.boo';
+    window.sessionStorage.setItem(testKey$1$1, 'foo');
+    window.sessionStorage.removeItem(testKey$1$1);
   } catch (e) {
     hasSessionStorageSupport = false;
   }
@@ -1077,14 +1161,14 @@
     function Browser(services) {
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-      _classCallCheck(this, Browser);
+      _classCallCheck$1(this, Browser);
 
       this.type = 'languageDetector';
       this.detectors = {};
       this.init(services, options);
     }
 
-    _createClass(Browser, [{
+    _createClass$1(Browser, [{
       key: "init",
       value: function init(services) {
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -1146,55 +1230,56 @@
 
   Browser.type = 'languageDetector';
 
-  const arr$2 = [];
-  const each$2 = arr$2.forEach;
-  const slice$2 = arr$2.slice;
-
-  function defaults$2 (obj) {
-    each$2.call(slice$2.call(arguments, 1), (source) => {
+  var arr$2 = [];
+  var each$2 = arr$2.forEach;
+  var slice$2 = arr$2.slice;
+  function defaults$2(obj) {
+    each$2.call(slice$2.call(arguments, 1), function (source) {
       if (source) {
         for (var prop in source) {
           if (obj[prop] === undefined) obj[prop] = source[prop];
         }
       }
     });
-    return obj
+    return obj;
   }
-
-  function debounce$1 (func, wait, immediate) {
+  function debounce$1(func, wait, immediate) {
     var timeout;
     return function () {
-      var context = this; var args = arguments;
-      var later = function () {
+      var context = this;
+      var args = arguments;
+
+      var later = function later() {
         timeout = null;
         if (!immediate) func.apply(context, args);
       };
+
       var callNow = immediate && !timeout;
       clearTimeout(timeout);
       timeout = setTimeout(later, wait);
       if (callNow) func.apply(context, args);
-    }
+    };
   }
+  function isMissingOption$1(obj, props) {
+    return props.reduce(function (mem, p) {
+      if (mem) return mem;
 
-  function isMissingOption$1 (obj, props) {
-    return props.reduce((mem, p) => {
-      if (mem) return mem
       if (!obj || !obj[p] || typeof obj[p] !== 'string' || !obj[p].toLowerCase() === p.toLowerCase()) {
-        const err = `i18next-lastused :: got "${obj[p]}" in options for ${p} which is invalid.`;
+        var err = "i18next-lastused :: got \"".concat(obj[p], "\" in options for ").concat(p, " which is invalid.");
         console.warn(err);
-        return err
+        return err;
       }
-      return false
-    }, false)
-  }
 
-  function replaceIn (str, arr, options) {
-    let ret = str;
-    arr.forEach(s => {
-      const regexp = new RegExp(`{{${s}}}`, 'g');
+      return false;
+    }, false);
+  }
+  function replaceIn(str, arr, options) {
+    var ret = str;
+    arr.forEach(function (s) {
+      var regexp = new RegExp("{{".concat(s, "}}"), 'g');
       ret = ret.replace(regexp, options[s]);
     });
-    return ret
+    return ret;
   }
 
   var fetchApi$2;
@@ -1217,7 +1302,8 @@
     __proto__: null
   });
 
-  let fetchApi$3;
+  var fetchApi$3;
+
   if (typeof fetch === 'function') {
     if (typeof global !== 'undefined' && global.fetch) {
       fetchApi$3 = global.fetch;
@@ -1225,7 +1311,9 @@
       fetchApi$3 = window.fetch;
     }
   }
-  let XmlHttpRequestApi$1;
+
+  var XmlHttpRequestApi$1;
+
   if (typeof XMLHttpRequest === 'function') {
     if (typeof global !== 'undefined' && global.XMLHttpRequest) {
       XmlHttpRequestApi$1 = global.XMLHttpRequest;
@@ -1233,7 +1321,9 @@
       XmlHttpRequestApi$1 = window.XMLHttpRequest;
     }
   }
-  let ActiveXObjectApi$1;
+
+  var ActiveXObjectApi$1;
+
   if (typeof ActiveXObject === 'function') {
     if (typeof global !== 'undefined' && global.ActiveXObject) {
       ActiveXObjectApi$1 = global.ActiveXObject;
@@ -1241,11 +1331,11 @@
       ActiveXObjectApi$1 = window.ActiveXObject;
     }
   }
-  if (!fetchApi$3 && fetchNode$1 && !XmlHttpRequestApi$1 && !ActiveXObjectApi$1) fetchApi$3 = undefined || fetchNode$1; // because of strange export
+
+  if (!fetchApi$3 && fetchNode$1 && !XmlHttpRequestApi$1 && !ActiveXObjectApi$1) fetchApi$3 = undefined || fetchNode$1;
   if (typeof fetchApi$3 !== 'function') fetchApi$3 = undefined;
 
-  // fetch api stuff
-  const requestWithFetch$1 = (options, url, payload, callback) => {
+  var requestWithFetch$1 = function requestWithFetch(options, url, payload, callback) {
     fetchApi$3(url, {
       method: payload ? 'POST' : 'GET',
       body: payload ? JSON.stringify(payload) : undefined,
@@ -1253,68 +1343,79 @@
         Authorization: options.authorize && options.apiKey ? options.apiKey : undefined,
         'Content-Type': 'application/json'
       }
-    }).then((response) => {
-      const resourceNotExisting = response.headers && response.headers.get('x-cache') === 'Error from cloudfront';
-      if (!response.ok) return callback(response.statusText || 'Error', { status: response.status, resourceNotExisting })
-      response.text().then((data) => {
-        callback(null, { status: response.status, data, resourceNotExisting });
+    }).then(function (response) {
+      var resourceNotExisting = response.headers && response.headers.get('x-cache') === 'Error from cloudfront';
+      if (!response.ok) return callback(response.statusText || 'Error', {
+        status: response.status,
+        resourceNotExisting: resourceNotExisting
+      });
+      response.text().then(function (data) {
+        callback(null, {
+          status: response.status,
+          data: data,
+          resourceNotExisting: resourceNotExisting
+        });
       }).catch(callback);
     }).catch(callback);
   };
 
-  // xml http request stuff
-  const requestWithXmlHttpRequest$1 = (options, url, payload, callback) => {
+  var requestWithXmlHttpRequest$1 = function requestWithXmlHttpRequest(options, url, payload, callback) {
     try {
-      let x;
+      var x;
+
       if (XmlHttpRequestApi$1) {
         x = new XmlHttpRequestApi$1();
       } else {
         x = new ActiveXObjectApi$1('MSXML2.XMLHTTP.3.0');
       }
+
       x.open(payload ? 'POST' : 'GET', url, 1);
+
       if (!options.crossDomain) {
         x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
       }
+
       if (options.authorize && options.apiKey) {
         x.setRequestHeader('Authorization', options.apiKey);
       }
+
       if (payload || options.setContentTypeJSON) {
         x.setRequestHeader('Content-Type', 'application/json');
       }
-      x.onreadystatechange = () => {
-        const resourceNotExisting = x.getResponseHeader('x-cache') === 'Error from cloudfront';
-        x.readyState > 3 && callback(x.status >= 400 ? x.statusText : null, { status: x.status, data: x.responseText, resourceNotExisting });
+
+      x.onreadystatechange = function () {
+        var resourceNotExisting = x.getResponseHeader('x-cache') === 'Error from cloudfront';
+        x.readyState > 3 && callback(x.status >= 400 ? x.statusText : null, {
+          status: x.status,
+          data: x.responseText,
+          resourceNotExisting: resourceNotExisting
+        });
       };
+
       x.send(JSON.stringify(payload));
     } catch (e) {
       console && console.log(e);
     }
   };
 
-  const request$1 = (options, url, payload, callback) => {
+  var request$1 = function request(options, url, payload, callback) {
     if (typeof payload === 'function') {
       callback = payload;
       payload = undefined;
     }
-    callback = callback || (() => {});
+
+    callback = callback || function () {};
 
     if (fetchApi$3) {
-      // use fetch api
-      return requestWithFetch$1(options, url, payload, callback)
+      return requestWithFetch$1(options, url, payload, callback);
     }
 
     if (typeof XMLHttpRequest === 'function' || typeof ActiveXObject === 'function') {
-      // use xml http request
-      return requestWithXmlHttpRequest$1(options, url, payload, callback)
+      return requestWithXmlHttpRequest$1(options, url, payload, callback);
     }
-
-    // import('node-fetch').then((fetch) => {
-    //   fetchApi = fetch.default || fetch // because of strange export of node-fetch
-    //   requestWithFetch(options, url, payload, callback)
-    // }).catch(callback)
   };
 
-  const getDefaults$2 = () => {
+  var getDefaults$2 = function getDefaults() {
     return {
       lastUsedPath: 'https://api.locize.app/used/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
       referenceLng: 'en',
@@ -1323,16 +1424,15 @@
       version: 'latest',
       debounceSubmit: 90000,
       allowedHosts: ['localhost']
-    }
+    };
   };
 
-  const locizeLastUsed = {
-    init (options) {
-      const isI18next = options.t && typeof options.t === 'function';
-
+  var locizeLastUsed = {
+    init: function init(options) {
+      var isI18next = options.t && typeof options.t === 'function';
       this.options = isI18next ? defaults$2(options.options.locizeLastUsed, this.options || {}, getDefaults$2()) : defaults$2(options, this.options || {}, getDefaults$2());
+      var hostname = typeof window !== 'undefined' && window.location && window.location.hostname;
 
-      const hostname = typeof window !== 'undefined' && window.location && window.location.hostname;
       if (hostname) {
         this.isAllowed = this.options.allowedHosts.indexOf(hostname) > -1;
       } else {
@@ -1342,69 +1442,67 @@
       this.submitting = null;
       this.pending = {};
       this.done = {};
-
       this.submit = debounce$1(this.submit, this.options.debounceSubmit);
-
-      // intercept
       if (isI18next) this.interceptI18next(options);
     },
+    interceptI18next: function interceptI18next(i18next) {
+      var _this = this;
 
-    interceptI18next (i18next) {
-      const origGetResource = i18next.services.resourceStore.getResource;
+      var origGetResource = i18next.services.resourceStore.getResource;
 
-      i18next.services.resourceStore.getResource = (lng, ns, key, options) => {
-        // call last used
-        if (key) this.used(ns, key);
-
-        // by pass orginal call
-        return origGetResource.call(i18next.services.resourceStore, lng, ns, key, options)
+      i18next.services.resourceStore.getResource = function (lng, ns, key, options) {
+        if (key) _this.used(ns, key);
+        return origGetResource.call(i18next.services.resourceStore, lng, ns, key, options);
       };
     },
+    used: function used(ns, key, callback) {
+      var _this2 = this;
 
-    used (ns, key, callback) {
-      ['pending', 'done'].forEach((k) => {
-        if (this.done[ns] && this.done[ns][key]) return
-        if (!this[k][ns]) this[k][ns] = {};
-        this[k][ns][key] = true;
+      ['pending', 'done'].forEach(function (k) {
+        if (_this2.done[ns] && _this2.done[ns][key]) return;
+        if (!_this2[k][ns]) _this2[k][ns] = {};
+        _this2[k][ns][key] = true;
       });
-
       this.submit(callback);
     },
+    submit: function submit(callback) {
+      var _this3 = this;
 
-    submit (callback) {
-      if (!this.isAllowed) return callback && callback(new Error('not allowed'))
-      if (this.submitting) return this.submit(callback)
-
-      // missing options
-      const isMissing = isMissingOption$1(this.options, ['projectId', 'version', 'apiKey', 'referenceLng']);
-      if (isMissing) return callback && callback(new Error(isMissing))
-
+      if (!this.isAllowed) return callback && callback(new Error('not allowed'));
+      if (this.submitting) return this.submit(callback);
+      var isMissing = isMissingOption$1(this.options, ['projectId', 'version', 'apiKey', 'referenceLng']);
+      if (isMissing) return callback && callback(new Error(isMissing));
       this.submitting = this.pending;
       this.pending = {};
+      var namespaces = Object.keys(this.submitting);
+      var todo = namespaces.length;
 
-      const namespaces = Object.keys(this.submitting);
-
-      let todo = namespaces.length;
-      const doneOne = (err) => {
+      var doneOne = function doneOne(err) {
         todo--;
+
         if (!todo) {
-          this.submitting = null;
+          _this3.submitting = null;
           if (callback) callback(err);
         }
       };
-      namespaces.forEach((ns) => {
-        const keys = Object.keys(this.submitting[ns]);
-        const url = replaceIn(this.options.lastUsedPath, ['projectId', 'version', 'lng', 'ns'], defaults$2({ lng: this.options.referenceLng, ns }, this.options));
+
+      namespaces.forEach(function (ns) {
+        var keys = Object.keys(_this3.submitting[ns]);
+        var url = replaceIn(_this3.options.lastUsedPath, ['projectId', 'version', 'lng', 'ns'], defaults$2({
+          lng: _this3.options.referenceLng,
+          ns: ns
+        }, _this3.options));
 
         if (keys.length) {
-          request$1(defaults$2({ authorize: true }, this.options), url, keys, doneOne);
+          request$1(defaults$2({
+            authorize: true
+          }, _this3.options), url, keys, doneOne);
         } else {
           doneOne();
         }
       });
     }
   };
-
   locizeLastUsed.type = '3rdParty';
 
   var regexp$1 = new RegExp('\{\{(.+?)\}\}', 'g');
