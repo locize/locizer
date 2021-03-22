@@ -139,6 +139,7 @@
     __proto__: null
   });
 
+  function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
   var fetchApi$1;
 
   if (typeof fetch === 'function') {
@@ -151,7 +152,7 @@
 
   var XmlHttpRequestApi;
 
-  if (typeof XMLHttpRequest === 'function') {
+  if (typeof XMLHttpRequest === 'function' || (typeof XMLHttpRequest === "undefined" ? "undefined" : _typeof(XMLHttpRequest)) === 'object') {
     if (typeof global !== 'undefined' && global.XMLHttpRequest) {
       XmlHttpRequestApi = global.XMLHttpRequest;
     } else if (typeof window !== 'undefined' && window.XMLHttpRequest) {
@@ -247,7 +248,7 @@
       return requestWithFetch(options, url, payload, callback);
     }
 
-    if (typeof XMLHttpRequest === 'function' || typeof ActiveXObject === 'function') {
+    if (typeof XMLHttpRequest === 'function' || (typeof XMLHttpRequest === "undefined" ? "undefined" : _typeof(XMLHttpRequest)) === 'object' || typeof ActiveXObject === 'function') {
       return requestWithXmlHttpRequest(options, url, payload, callback);
     }
   };
@@ -1385,6 +1386,7 @@
     __proto__: null
   });
 
+  function _typeof$1(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof$1 = function _typeof(obj) { return typeof obj; }; } else { _typeof$1 = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof$1(obj); }
   var fetchApi$3;
 
   if (typeof fetch === 'function') {
@@ -1397,7 +1399,7 @@
 
   var XmlHttpRequestApi$1;
 
-  if (typeof XMLHttpRequest === 'function') {
+  if (typeof XMLHttpRequest === 'function' || (typeof XMLHttpRequest === "undefined" ? "undefined" : _typeof$1(XMLHttpRequest)) === 'object') {
     if (typeof global !== 'undefined' && global.XMLHttpRequest) {
       XmlHttpRequestApi$1 = global.XMLHttpRequest;
     } else if (typeof window !== 'undefined' && window.XMLHttpRequest) {
@@ -1493,7 +1495,7 @@
       return requestWithFetch$1(options, url, payload, callback);
     }
 
-    if (typeof XMLHttpRequest === 'function' || typeof ActiveXObject === 'function') {
+    if (typeof XMLHttpRequest === 'function' || (typeof XMLHttpRequest === "undefined" ? "undefined" : _typeof$1(XMLHttpRequest)) === 'object' || typeof ActiveXObject === 'function') {
       return requestWithXmlHttpRequest$1(options, url, payload, callback);
     }
   };
