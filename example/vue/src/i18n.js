@@ -12,7 +12,7 @@ export const i18n = createI18n({
   // ...
 });
 
-
+// called from within setup hook in App.vue
 export const loadMessagesPromise = new Promise((resolve, reject) => {
   locizer.loadAll('messages', (err, messages) => {
     if (err) return reject(err);
