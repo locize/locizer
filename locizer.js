@@ -1,14 +1,29 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global = global || self, global.locizer = factory());
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.locizer = factory());
 }(this, (function () { 'use strict';
 
-  var arr = [];
-  var each = arr.forEach;
-  var slice = arr.slice;
-  function defaults(obj) {
-    each.call(slice.call(arguments, 1), function (source) {
+  function _defineProperty(obj, key, value) {
+    if (key in obj) {
+      Object.defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    } else {
+      obj[key] = value;
+    }
+
+    return obj;
+  }
+
+  var arr$2 = [];
+  var each$2 = arr$2.forEach;
+  var slice$2 = arr$2.slice;
+  function defaults$2(obj) {
+    each$2.call(slice$2.call(arguments, 1), function (source) {
       if (source) {
         for (var prop in source) {
           if (obj[prop] === undefined) obj[prop] = source[prop];
@@ -17,7 +32,7 @@
     });
     return obj;
   }
-  function debounce(func, wait, immediate) {
+  function debounce$1(func, wait, immediate) {
     var timeout;
     return function () {
       var context = this;
@@ -80,32 +95,32 @@
     if (!obj) return undefined;
     return obj[k];
   }
-  var regexp = new RegExp('{{(.+?)}}', 'g');
+  var regexp$1 = new RegExp('{{(.+?)}}', 'g');
 
-  function makeString(object) {
+  function makeString$1(object) {
     if (object == null) return '';
     return '' + object;
   }
 
-  function interpolate(str, data, lng) {
+  function interpolate$1(str, data, lng) {
     var match, value;
 
     function regexSafe(val) {
       return val.replace(/\$/g, '$$$$');
     }
 
-    while (match = regexp.exec(str)) {
+    while (match = regexp$1.exec(str)) {
       value = match[1].trim();
-      if (typeof value !== 'string') value = makeString(value);
+      if (typeof value !== 'string') value = makeString$1(value);
       if (!value) value = '';
       value = regexSafe(value);
       str = str.replace(match[0], data[value] || value);
-      regexp.lastIndex = 0;
+      regexp$1.lastIndex = 0;
     }
 
     return str;
   }
-  function isMissingOption(obj, props) {
+  function isMissingOption$1(obj, props) {
     return props.reduce(function (mem, p) {
       if (mem) return mem;
 
@@ -119,62 +134,62 @@
     }, false);
   }
 
-  var fetchApi;
+  var fetchApi$3;
   if (typeof fetch === 'function') {
     if (typeof global !== 'undefined' && global.fetch) {
-      fetchApi = global.fetch;
+      fetchApi$3 = global.fetch;
     } else if (typeof window !== 'undefined' && window.fetch) {
-      fetchApi = window.fetch;
+      fetchApi$3 = window.fetch;
     }
   }
 
   if (typeof require !== 'undefined' && (typeof window === 'undefined' || typeof window.document === 'undefined')) {
-    var f = fetchApi || require('node-fetch');
-    if (f.default) f = f.default;
-    exports.default = f;
+    var f$1 = fetchApi$3 || require('cross-fetch');
+    if (f$1.default) f$1 = f$1.default;
+    exports.default = f$1;
     module.exports = exports.default;
   }
 
-  var fetchNode = /*#__PURE__*/Object.freeze({
+  var fetchNode$1 = /*#__PURE__*/Object.freeze({
     __proto__: null
   });
 
-  function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-  var fetchApi$1;
+  function _typeof$1(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof$1 = function _typeof(obj) { return typeof obj; }; } else { _typeof$1 = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof$1(obj); }
+  var fetchApi$2;
 
   if (typeof fetch === 'function') {
     if (typeof global !== 'undefined' && global.fetch) {
-      fetchApi$1 = global.fetch;
+      fetchApi$2 = global.fetch;
     } else if (typeof window !== 'undefined' && window.fetch) {
-      fetchApi$1 = window.fetch;
+      fetchApi$2 = window.fetch;
     }
   }
 
-  var XmlHttpRequestApi;
+  var XmlHttpRequestApi$1;
 
-  if (typeof XMLHttpRequest === 'function' || (typeof XMLHttpRequest === "undefined" ? "undefined" : _typeof(XMLHttpRequest)) === 'object') {
+  if (typeof XMLHttpRequest === 'function' || (typeof XMLHttpRequest === "undefined" ? "undefined" : _typeof$1(XMLHttpRequest)) === 'object') {
     if (typeof global !== 'undefined' && global.XMLHttpRequest) {
-      XmlHttpRequestApi = global.XMLHttpRequest;
+      XmlHttpRequestApi$1 = global.XMLHttpRequest;
     } else if (typeof window !== 'undefined' && window.XMLHttpRequest) {
-      XmlHttpRequestApi = window.XMLHttpRequest;
+      XmlHttpRequestApi$1 = window.XMLHttpRequest;
     }
   }
 
-  var ActiveXObjectApi;
+  var ActiveXObjectApi$1;
 
   if (typeof ActiveXObject === 'function') {
     if (typeof global !== 'undefined' && global.ActiveXObject) {
-      ActiveXObjectApi = global.ActiveXObject;
+      ActiveXObjectApi$1 = global.ActiveXObject;
     } else if (typeof window !== 'undefined' && window.ActiveXObject) {
-      ActiveXObjectApi = window.ActiveXObject;
+      ActiveXObjectApi$1 = window.ActiveXObject;
     }
   }
 
-  if (!fetchApi$1 && fetchNode && !XmlHttpRequestApi && !ActiveXObjectApi) fetchApi$1 = undefined || fetchNode;
-  if (typeof fetchApi$1 !== 'function') fetchApi$1 = undefined;
+  if (!fetchApi$2 && fetchNode$1 && !XmlHttpRequestApi$1 && !ActiveXObjectApi$1) fetchApi$2 = undefined || fetchNode$1;
+  if (typeof fetchApi$2 !== 'function') fetchApi$2 = undefined;
 
-  var requestWithFetch = function requestWithFetch(options, url, payload, callback) {
-    fetchApi$1(url, {
+  var requestWithFetch$1 = function requestWithFetch(options, url, payload, callback) {
+    fetchApi$2(url, {
       method: payload ? 'POST' : 'GET',
       body: payload ? JSON.stringify(payload) : undefined,
       headers: {
@@ -197,14 +212,14 @@
     }).catch(callback);
   };
 
-  var requestWithXmlHttpRequest = function requestWithXmlHttpRequest(options, url, payload, callback) {
+  var requestWithXmlHttpRequest$1 = function requestWithXmlHttpRequest(options, url, payload, callback) {
     try {
       var x;
 
-      if (XmlHttpRequestApi) {
-        x = new XmlHttpRequestApi();
+      if (XmlHttpRequestApi$1) {
+        x = new XmlHttpRequestApi$1();
       } else {
-        x = new ActiveXObjectApi('MSXML2.XMLHTTP.3.0');
+        x = new ActiveXObjectApi$1('MSXML2.XMLHTTP.3.0');
       }
 
       x.open(payload ? 'POST' : 'GET', url, 1);
@@ -236,7 +251,7 @@
     }
   };
 
-  var request = function request(options, url, payload, callback) {
+  var request$1 = function request(options, url, payload, callback) {
     if (typeof payload === 'function') {
       callback = payload;
       payload = undefined;
@@ -244,22 +259,22 @@
 
     callback = callback || function () {};
 
-    if (fetchApi$1) {
-      return requestWithFetch(options, url, payload, callback);
+    if (fetchApi$2) {
+      return requestWithFetch$1(options, url, payload, callback);
     }
 
-    if (typeof XMLHttpRequest === 'function' || (typeof XMLHttpRequest === "undefined" ? "undefined" : _typeof(XMLHttpRequest)) === 'object' || typeof ActiveXObject === 'function') {
-      return requestWithXmlHttpRequest(options, url, payload, callback);
+    if (typeof XMLHttpRequest === 'function' || (typeof XMLHttpRequest === "undefined" ? "undefined" : _typeof$1(XMLHttpRequest)) === 'object' || typeof ActiveXObject === 'function') {
+      return requestWithXmlHttpRequest$1(options, url, payload, callback);
     }
   };
 
-  function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+  function _classCallCheck$1(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-  function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+  function _defineProperties$1(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
-  function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+  function _createClass$1(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties$1(Constructor.prototype, protoProps); if (staticProps) _defineProperties$1(Constructor, staticProps); return Constructor; }
 
-  var getDefaults = function getDefaults() {
+  var getDefaults$2 = function getDefaults() {
     return {
       loadPath: 'https://api.locize.app/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
       privatePath: 'https://api.locize.app/private/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
@@ -282,15 +297,15 @@
     };
   };
 
-  var hasLocalStorageSupport;
+  var hasLocalStorageSupport$1;
 
   try {
-    hasLocalStorageSupport = typeof window !== 'undefined' && window.localStorage !== null;
+    hasLocalStorageSupport$1 = typeof window !== 'undefined' && window.localStorage !== null;
     var testKey = 'notExistingLocizeProject';
     window.localStorage.setItem(testKey, 'foo');
     window.localStorage.removeItem(testKey);
   } catch (e) {
-    hasLocalStorageSupport = false;
+    hasLocalStorageSupport$1 = false;
   }
 
   function getStorage(storageExpiration) {
@@ -298,7 +313,7 @@
 
     var isProjectNotExisting = function isProjectNotExisting() {};
 
-    if (hasLocalStorageSupport) {
+    if (hasLocalStorageSupport$1) {
       setProjectNotExisting = function setProjectNotExisting(projectId) {
         window.localStorage.setItem("notExistingLocizeProject_".concat(projectId), Date.now());
       };
@@ -354,7 +369,7 @@
       var allOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
       var callback = arguments.length > 3 ? arguments[3] : undefined;
 
-      _classCallCheck(this, I18NextLocizeBackend);
+      _classCallCheck$1(this, I18NextLocizeBackend);
 
       this.services = services;
       this.options = options;
@@ -368,7 +383,7 @@
       }
     }
 
-    _createClass(I18NextLocizeBackend, [{
+    _createClass$1(I18NextLocizeBackend, [{
       key: "init",
       value: function init(services) {
         var _this = this;
@@ -383,7 +398,7 @@
           options.translatedPercentageThreshold = options.whitelistThreshold;
         }
 
-        this.options = defaults(options, this.options || {}, getDefaults());
+        this.options = defaults$2(options, this.options || {}, getDefaults$2());
         this.allOptions = allOptions;
         this.somethingLoaded = false;
         this.isProjectNotExisting = false;
@@ -420,7 +435,7 @@
         this.queuedWrites = {
           pending: {}
         };
-        this.debouncedProcess = debounce(this.process, 10000);
+        this.debouncedProcess = debounce$1(this.process, 10000);
         if (this.interval) clearInterval(this.interval);
 
         if (this.options.reloadInterval && this.options.projectId) {
@@ -469,9 +484,9 @@
       value: function getLanguages(callback) {
         var _this3 = this;
 
-        var isMissing = isMissingOption(this.options, ['projectId']);
+        var isMissing = isMissingOption$1(this.options, ['projectId']);
         if (isMissing) return callback(new Error(isMissing));
-        var url = interpolate(this.options.getLanguagesPath, {
+        var url = interpolate$1(this.options.getLanguagesPath, {
           projectId: this.options.projectId
         });
 
@@ -575,9 +590,9 @@
         var options = {};
 
         if (this.options.private) {
-          var isMissing = isMissingOption(this.options, ['projectId', 'version', 'apiKey']);
+          var isMissing = isMissingOption$1(this.options, ['projectId', 'version', 'apiKey']);
           if (isMissing) return callback(new Error(isMissing), false);
-          url = interpolate(this.options.privatePath, {
+          url = interpolate$1(this.options.privatePath, {
             lng: language,
             ns: namespace,
             projectId: this.options.projectId,
@@ -587,10 +602,10 @@
             authorize: true
           };
         } else {
-          var _isMissing = isMissingOption(this.options, ['projectId', 'version']);
+          var _isMissing = isMissingOption$1(this.options, ['projectId', 'version']);
 
           if (_isMissing) return callback(new Error(_isMissing), false);
-          url = interpolate(this.options.loadPath, {
+          url = interpolate$1(this.options.loadPath, {
             lng: language,
             ns: namespace,
             projectId: this.options.projectId,
@@ -628,7 +643,7 @@
       value: function loadUrl(options, url, payload, callback) {
         var _this7 = this;
 
-        options = defaults(options, this.options);
+        options = defaults$2(options, this.options);
 
         if (typeof payload === 'function') {
           callback = payload;
@@ -637,7 +652,7 @@
 
         callback = callback || function () {};
 
-        request(options, url, payload, function (err, res) {
+        request$1(options, url, payload, function (err, res) {
           var resourceNotExisting = res && res.resourceNotExisting;
 
           if (res && (res.status === 408 || res.status === 400)) {
@@ -694,7 +709,7 @@
         if (!callback) callback = function callback() {};
         this.checkIfProjectExists(function (err) {
           if (err) return callback(err);
-          var isMissing = isMissingOption(_this8.options, ['projectId', 'version', 'apiKey', 'referenceLng']);
+          var isMissing = isMissingOption$1(_this8.options, ['projectId', 'version', 'apiKey', 'referenceLng']);
           if (isMissing) return callback(new Error(isMissing));
 
           if (!_this8.isAddOrUpdateAllowed) {
@@ -724,7 +739,7 @@
         if (!callback) callback = function callback() {};
         this.checkIfProjectExists(function (err) {
           if (err) return callback(err);
-          var isMissing = isMissingOption(_this9.options, ['projectId', 'version', 'apiKey', 'referenceLng']);
+          var isMissing = isMissingOption$1(_this9.options, ['projectId', 'version', 'apiKey', 'referenceLng']);
           if (isMissing) return callback(new Error(isMissing));
 
           if (!_this9.isAddOrUpdateAllowed) {
@@ -744,13 +759,13 @@
     }, {
       key: "writePage",
       value: function writePage(lng, namespace, missings, callback) {
-        var missingUrl = interpolate(this.options.addPath, {
+        var missingUrl = interpolate$1(this.options.addPath, {
           lng: lng,
           ns: namespace,
           projectId: this.options.projectId,
           version: this.options.version
         });
-        var updatesUrl = interpolate(this.options.updatePath, {
+        var updatesUrl = interpolate$1(this.options.updatePath, {
           lng: lng,
           ns: namespace,
           projectId: this.options.projectId,
@@ -788,13 +803,13 @@
         if (!todo) doneOne();
 
         if (hasMissing) {
-          request(defaults({
+          request$1(defaults$2({
             authorize: true
           }, this.options), missingUrl, payloadMissing, doneOne);
         }
 
         if (hasUpdates) {
-          request(defaults({
+          request$1(defaults$2({
             authorize: true
           }, this.options), updatesUrl, payloadUpdate, doneOne);
         }
@@ -880,13 +895,13 @@
 
   I18NextLocizeBackend.type = 'backend';
 
-  function _classCallCheck$1(instance, Constructor) {
+  function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
     }
   }
 
-  function _defineProperties$1(target, props) {
+  function _defineProperties(target, props) {
     for (var i = 0; i < props.length; i++) {
       var descriptor = props[i];
       descriptor.enumerable = descriptor.enumerable || false;
@@ -896,9 +911,9 @@
     }
   }
 
-  function _createClass$1(Constructor, protoProps, staticProps) {
-    if (protoProps) _defineProperties$1(Constructor.prototype, protoProps);
-    if (staticProps) _defineProperties$1(Constructor, staticProps);
+  function _createClass(Constructor, protoProps, staticProps) {
+    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) _defineProperties(Constructor, staticProps);
     return Constructor;
   }
 
@@ -1066,21 +1081,21 @@
     }
   };
 
-  var hasLocalStorageSupport$1 = null;
+  var hasLocalStorageSupport = null;
 
   var localStorageAvailable = function localStorageAvailable() {
-    if (hasLocalStorageSupport$1 !== null) return hasLocalStorageSupport$1;
+    if (hasLocalStorageSupport !== null) return hasLocalStorageSupport;
 
     try {
-      hasLocalStorageSupport$1 = window !== 'undefined' && window.localStorage !== null;
+      hasLocalStorageSupport = window !== 'undefined' && window.localStorage !== null;
       var testKey = 'i18next.translate.boo';
       window.localStorage.setItem(testKey, 'foo');
       window.localStorage.removeItem(testKey);
     } catch (e) {
-      hasLocalStorageSupport$1 = false;
+      hasLocalStorageSupport = false;
     }
 
-    return hasLocalStorageSupport$1;
+    return hasLocalStorageSupport;
   };
 
   var localStorage = {
@@ -1245,14 +1260,14 @@
     function Browser(services) {
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-      _classCallCheck$1(this, Browser);
+      _classCallCheck(this, Browser);
 
       this.type = 'languageDetector';
       this.detectors = {};
       this.init(services, options);
     }
 
-    _createClass$1(Browser, [{
+    _createClass(Browser, [{
       key: "init",
       value: function init(services) {
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -1314,11 +1329,11 @@
 
   Browser.type = 'languageDetector';
 
-  var arr$2 = [];
-  var each$2 = arr$2.forEach;
-  var slice$2 = arr$2.slice;
-  function defaults$2(obj) {
-    each$2.call(slice$2.call(arguments, 1), function (source) {
+  var arr = [];
+  var each = arr.forEach;
+  var slice = arr.slice;
+  function defaults(obj) {
+    each.call(slice.call(arguments, 1), function (source) {
       if (source) {
         for (var prop in source) {
           if (obj[prop] === undefined) obj[prop] = source[prop];
@@ -1327,7 +1342,7 @@
     });
     return obj;
   }
-  function debounce$1(func, wait, immediate) {
+  function debounce(func, wait, immediate) {
     var timeout;
     return function () {
       var context = this;
@@ -1344,7 +1359,7 @@
       if (callNow) func.apply(context, args);
     };
   }
-  function isMissingOption$1(obj, props) {
+  function isMissingOption(obj, props) {
     return props.reduce(function (mem, p) {
       if (mem) return mem;
 
@@ -1366,62 +1381,62 @@
     return ret;
   }
 
-  var fetchApi$2;
+  var fetchApi$1;
   if (typeof fetch === 'function') {
     if (typeof global !== 'undefined' && global.fetch) {
-      fetchApi$2 = global.fetch;
+      fetchApi$1 = global.fetch;
     } else if (typeof window !== 'undefined' && window.fetch) {
-      fetchApi$2 = window.fetch;
+      fetchApi$1 = window.fetch;
     }
   }
 
   if (typeof require !== 'undefined' && (typeof window === 'undefined' || typeof window.document === 'undefined')) {
-    var f$1 = fetchApi$2 || require('node-fetch');
-    if (f$1.default) f$1 = f$1.default;
-    exports.default = f$1;
+    var f = fetchApi$1 || require('cross-fetch');
+    if (f.default) f = f.default;
+    exports.default = f;
     module.exports = exports.default;
   }
 
-  var fetchNode$1 = /*#__PURE__*/Object.freeze({
+  var fetchNode = /*#__PURE__*/Object.freeze({
     __proto__: null
   });
 
-  function _typeof$1(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof$1 = function _typeof(obj) { return typeof obj; }; } else { _typeof$1 = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof$1(obj); }
-  var fetchApi$3;
+  function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+  var fetchApi;
 
   if (typeof fetch === 'function') {
     if (typeof global !== 'undefined' && global.fetch) {
-      fetchApi$3 = global.fetch;
+      fetchApi = global.fetch;
     } else if (typeof window !== 'undefined' && window.fetch) {
-      fetchApi$3 = window.fetch;
+      fetchApi = window.fetch;
     }
   }
 
-  var XmlHttpRequestApi$1;
+  var XmlHttpRequestApi;
 
-  if (typeof XMLHttpRequest === 'function' || (typeof XMLHttpRequest === "undefined" ? "undefined" : _typeof$1(XMLHttpRequest)) === 'object') {
+  if (typeof XMLHttpRequest === 'function' || (typeof XMLHttpRequest === "undefined" ? "undefined" : _typeof(XMLHttpRequest)) === 'object') {
     if (typeof global !== 'undefined' && global.XMLHttpRequest) {
-      XmlHttpRequestApi$1 = global.XMLHttpRequest;
+      XmlHttpRequestApi = global.XMLHttpRequest;
     } else if (typeof window !== 'undefined' && window.XMLHttpRequest) {
-      XmlHttpRequestApi$1 = window.XMLHttpRequest;
+      XmlHttpRequestApi = window.XMLHttpRequest;
     }
   }
 
-  var ActiveXObjectApi$1;
+  var ActiveXObjectApi;
 
   if (typeof ActiveXObject === 'function') {
     if (typeof global !== 'undefined' && global.ActiveXObject) {
-      ActiveXObjectApi$1 = global.ActiveXObject;
+      ActiveXObjectApi = global.ActiveXObject;
     } else if (typeof window !== 'undefined' && window.ActiveXObject) {
-      ActiveXObjectApi$1 = window.ActiveXObject;
+      ActiveXObjectApi = window.ActiveXObject;
     }
   }
 
-  if (!fetchApi$3 && fetchNode$1 && !XmlHttpRequestApi$1 && !ActiveXObjectApi$1) fetchApi$3 = undefined || fetchNode$1;
-  if (typeof fetchApi$3 !== 'function') fetchApi$3 = undefined;
+  if (!fetchApi && fetchNode && !XmlHttpRequestApi && !ActiveXObjectApi) fetchApi = undefined || fetchNode;
+  if (typeof fetchApi !== 'function') fetchApi = undefined;
 
-  var requestWithFetch$1 = function requestWithFetch(options, url, payload, callback) {
-    fetchApi$3(url, {
+  var requestWithFetch = function requestWithFetch(options, url, payload, callback) {
+    fetchApi(url, {
       method: payload ? 'POST' : 'GET',
       body: payload ? JSON.stringify(payload) : undefined,
       headers: {
@@ -1444,14 +1459,14 @@
     }).catch(callback);
   };
 
-  var requestWithXmlHttpRequest$1 = function requestWithXmlHttpRequest(options, url, payload, callback) {
+  var requestWithXmlHttpRequest = function requestWithXmlHttpRequest(options, url, payload, callback) {
     try {
       var x;
 
-      if (XmlHttpRequestApi$1) {
-        x = new XmlHttpRequestApi$1();
+      if (XmlHttpRequestApi) {
+        x = new XmlHttpRequestApi();
       } else {
-        x = new ActiveXObjectApi$1('MSXML2.XMLHTTP.3.0');
+        x = new ActiveXObjectApi('MSXML2.XMLHTTP.3.0');
       }
 
       x.open(payload ? 'POST' : 'GET', url, 1);
@@ -1483,7 +1498,7 @@
     }
   };
 
-  var request$1 = function request(options, url, payload, callback) {
+  var request = function request(options, url, payload, callback) {
     if (typeof payload === 'function') {
       callback = payload;
       payload = undefined;
@@ -1491,16 +1506,16 @@
 
     callback = callback || function () {};
 
-    if (fetchApi$3) {
-      return requestWithFetch$1(options, url, payload, callback);
+    if (fetchApi) {
+      return requestWithFetch(options, url, payload, callback);
     }
 
-    if (typeof XMLHttpRequest === 'function' || (typeof XMLHttpRequest === "undefined" ? "undefined" : _typeof$1(XMLHttpRequest)) === 'object' || typeof ActiveXObject === 'function') {
-      return requestWithXmlHttpRequest$1(options, url, payload, callback);
+    if (typeof XMLHttpRequest === 'function' || (typeof XMLHttpRequest === "undefined" ? "undefined" : _typeof(XMLHttpRequest)) === 'object' || typeof ActiveXObject === 'function') {
+      return requestWithXmlHttpRequest(options, url, payload, callback);
     }
   };
 
-  var getDefaults$2 = function getDefaults() {
+  var getDefaults = function getDefaults() {
     return {
       lastUsedPath: 'https://api.locize.app/used/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
       referenceLng: 'en',
@@ -1515,7 +1530,7 @@
   var locizeLastUsed = {
     init: function init(options) {
       var isI18next = options.t && typeof options.t === 'function';
-      this.options = isI18next ? defaults$2(options.options.locizeLastUsed, this.options || {}, getDefaults$2()) : defaults$2(options, this.options || {}, getDefaults$2());
+      this.options = isI18next ? defaults(options.options.locizeLastUsed, this.options || {}, getDefaults()) : defaults(options, this.options || {}, getDefaults());
       var hostname = typeof window !== 'undefined' && window.location && window.location.hostname;
 
       if (hostname) {
@@ -1527,7 +1542,7 @@
       this.submitting = null;
       this.pending = {};
       this.done = {};
-      this.submit = debounce$1(this.submit, this.options.debounceSubmit);
+      this.submit = debounce(this.submit, this.options.debounceSubmit);
       if (isI18next) this.interceptI18next(options);
     },
     interceptI18next: function interceptI18next(i18next) {
@@ -1555,7 +1570,7 @@
 
       if (!this.isAllowed) return callback && callback(new Error('not allowed'));
       if (this.submitting) return this.submit(callback);
-      var isMissing = isMissingOption$1(this.options, ['projectId', 'version', 'apiKey', 'referenceLng']);
+      var isMissing = isMissingOption(this.options, ['projectId', 'version', 'apiKey', 'referenceLng']);
       if (isMissing) return callback && callback(new Error(isMissing));
       this.submitting = this.pending;
       this.pending = {};
@@ -1573,13 +1588,13 @@
 
       namespaces.forEach(function (ns) {
         var keys = Object.keys(_this3.submitting[ns]);
-        var url = replaceIn(_this3.options.lastUsedPath, ['projectId', 'version', 'lng', 'ns'], defaults$2({
+        var url = replaceIn(_this3.options.lastUsedPath, ['projectId', 'version', 'lng', 'ns'], defaults({
           lng: _this3.options.referenceLng,
           ns: ns
         }, _this3.options));
 
         if (keys.length) {
-          request$1(defaults$2({
+          request(defaults({
             authorize: true
           }, _this3.options), url, keys, doneOne);
         } else {
@@ -1590,14 +1605,14 @@
   };
   locizeLastUsed.type = '3rdParty';
 
-  var regexp$1 = new RegExp('\{\{(.+?)\}\}', 'g');
+  var regexp = new RegExp('\{\{(.+?)\}\}', 'g');
 
-  function makeString$1(object) {
+  function makeString(object) {
     if (object == null) return '';
     return '' + object;
   }
 
-  function interpolate$1(str, data, lng) {
+  function interpolate(str, data, lng) {
     var match, value;
 
     function regexSafe(val) {
@@ -1605,13 +1620,13 @@
     } // regular escape on demand
 
 
-    while (match = regexp$1.exec(str)) {
+    while (match = regexp.exec(str)) {
       value = match[1].trim();
-      if (typeof value !== 'string') value = makeString$1(value);
+      if (typeof value !== 'string') value = makeString(value);
       if (!value) value = '';
       value = regexSafe(value);
       str = str.replace(match[0], data[value] || value);
-      regexp$1.lastIndex = 0;
+      regexp.lastIndex = 0;
     }
 
     return str;
@@ -1627,14 +1642,37 @@
     return specialCases.indexOf(code) > -1 ? p[1].toLowerCase() : p[0];
   }
 
+  function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+  function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
   var services = {
     interpolator: {
-      interpolate: interpolate$1
+      interpolate: interpolate
     },
     languageUtils: {
       formatLanguageCode: formatLanguageCode
     }
   };
+
+  var asyncEach = function asyncEach(arr, fn, callback) {
+    var results = [];
+    var count = arr.length;
+    arr.forEach(function (item, index) {
+      fn(item, function (err, data) {
+        results[index] = data;
+
+        if (err) {
+          callback && callback(err);
+          callback = null;
+        }
+
+        if (--count === 0 && callback) {
+          callback(null, results);
+        }
+      });
+    });
+  };
+
   var locizer = {
     init: function init(options) {
       this.options = options;
@@ -1643,6 +1681,9 @@
       this.lng = options.lng || this.detector.detect();
       locizeLastUsed.init(options);
       return this;
+    },
+    isValid: function isValid(lngs, l) {
+      return lngs[l] && lngs[l].translated[this.options.version || 'latest'] >= (this.options.loadIfTranslatedOver || 1);
     },
     getLanguage: function getLanguage(lng, callback) {
       var _this = this;
@@ -1653,14 +1694,9 @@
       }
 
       if (!lng) lng = this.lng;
-
-      var isValid = function isValid(lngs, l) {
-        return lngs[l] && lngs[l].translated[_this.options.version || 'latest'] >= (_this.options.loadIfTranslatedOver || 1);
-      };
-
       this.getLanguages(function (err, lngs) {
-        if (isValid(lngs, lng)) return callback(null, lng);
-        if (isValid(lngs, getLanguagePartFromCode(lng))) return callback(null, getLanguagePartFromCode(lng));
+        if (_this.isValid(lngs, lng)) return callback(null, lng);
+        if (_this.isValid(lngs, getLanguagePartFromCode(lng))) return callback(null, getLanguagePartFromCode(lng));
         callback(null, _this.options.fallbackLng || Object.keys(lngs)[0]);
       });
       return this;
@@ -1690,6 +1726,28 @@
       this.getLanguage(lng, function (err, lng) {
         _this3.backend.read(lng, ns, function (err, data) {
           return callback(err, data, lng);
+        });
+      });
+      return this;
+    },
+    loadAll: function loadAll(ns, callback) {
+      var _this4 = this;
+
+      this.getLanguages(function (err, lngs) {
+        var validLngs = Object.keys(lngs).filter(function (l) {
+          return _this4.isValid(lngs, l);
+        });
+        asyncEach(validLngs, function (l, clb) {
+          _this4.load(ns, l, function (err, res) {
+            if (err) return clb(err);
+            clb(null, _defineProperty({}, l, res));
+          });
+        }, function (err, results) {
+          if (err) return callback(err);
+          var ret = results.reduce(function (prev, l) {
+            return _objectSpread(_objectSpread({}, prev), l);
+          }, {});
+          callback(null, ret);
         });
       });
       return this;

@@ -129,11 +129,28 @@ locizer.getLanguages((err, lngs) => {));
 ## load
 
 ```js
-// load namespaces from locize in the lng provided in options or detected from user
+// load a namespace from locize in the lng provided in options or detected from user
 locizer.load("namespace", (err, res) => {});
 
 // load in different lng
 locizer.load("namespace", "de", (err, res) => {});
+```
+
+## loadAll
+
+```js
+// load a namespace from locize in all languages
+locizer.loadAll("namespace", (err, res) => {
+  // res:
+  // {
+  //   en: {
+  //     hello: "hello world"
+  //   },
+  //   de: {
+  //     hello: "hallo welt"
+  //   }
+  // }
+});
 ```
 
 ## add

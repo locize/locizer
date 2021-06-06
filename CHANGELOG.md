@@ -1,3 +1,8 @@
+### v3.2.0
+
+- update dependencies
+- offer loadAll function
+
 ### v3.1.0
 
 - update dependencies

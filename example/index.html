@@ -54,6 +54,9 @@
         .load('common', 'de', function(err, data) {
           console.warn('common - de', data);
         })
+        .loadAll('translation', function(err, data) {
+          console.warn('all translation', data);
+        })
         .add('common', 'myKey', 'myValue', function() {
           console.warn('added myKey with value myValue');
         });

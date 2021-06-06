@@ -12,7 +12,24 @@ const services = {
   languageUtils: {
     formatLanguageCode
   }
-}
+};
+
+const asyncEach = (arr, fn, callback) => {
+  const results = [];
+  let count = arr.length;
+  arr.forEach((item, index) => {
+    fn(item, (err, data) => {
+      results[index] = data;
+      if (err) {
+        callback && callback(err);
+        callback = null;
+      }
+      if (--count === 0 && callback) {
+        callback(null, results);
+      }
+    });
+  });
+};
 
 const locizer = {
   init(options) {
@@ -25,6 +42,10 @@ const locizer = {
     return this;
   },
 
+  isValid(lngs, l) {
+    return lngs[l] && lngs[l].translated[this.options.version || 'latest'] >= (this.options.loadIfTranslatedOver || 1);
+  },
+
   getLanguage(lng, callback) {
     if (typeof lng === 'function') {
       callback = lng;
@@ -32,11 +53,9 @@ const locizer = {
     }
     if (!lng) lng = this.lng;
 
-    const isValid = (lngs, l) => lngs[l] && lngs[l].translated[this.options.version || 'latest'] >= (this.options.loadIfTranslatedOver || 1);
-
     this.getLanguages((err, lngs) => {
-      if (isValid(lngs, lng)) return callback(null, lng);
-      if (isValid(lngs, getLanguagePartFromCode(lng))) return callback(null, getLanguagePartFromCode(lng));
+      if (this.isValid(lngs, lng)) return callback(null, lng);
+      if (this.isValid(lngs, getLanguagePartFromCode(lng))) return callback(null, getLanguagePartFromCode(lng));
       callback(null, this.options.fallbackLng || Object.keys(lngs)[0]);
     });
     return this;
@@ -62,6 +81,25 @@ const locizer = {
 
     this.getLanguage(lng, (err, lng) => {
       this.backend.read(lng, ns, (err, data) => callback(err, data, lng));
+    });
+
+    return this;
+  },
+
+  loadAll(ns, callback) {
+    this.getLanguages((err, lngs) => {
+      const validLngs = Object.keys(lngs).filter((l) => this.isValid(lngs, l));
+
+      asyncEach(validLngs, (l, clb) => {
+        this.load(ns, l, (err, res) => {
+          if (err) return clb(err);
+          clb(null, { [l]: res });
+        })
+      }, (err, results) => {
+        if (err) return callback(err);
+        const ret = results.reduce((prev, l) => ({ ...prev,  ...l }), {});
+        callback(null, ret);
+      });
     });
 
     return this;
