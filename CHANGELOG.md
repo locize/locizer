@@ -1,3 +1,7 @@
+### v3.3.0
+
+- automatically try to detect referenceLng
+
 ### v3.2.0
 
 - update dependencies

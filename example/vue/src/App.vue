@@ -4,8 +4,9 @@
 </template>
 
 <script>
-import { loadMessagesPromise } from './i18n'
+import { loadMessagesPromise, handleMissing } from './i18n'
 import TranslationShowCase from './components/TranslationShowCase.vue'
+import { useI18n } from 'vue-i18n'
 
 export default {
   name: 'App',
@@ -15,7 +16,10 @@ export default {
   // used in combination with Suspense.
   // useful when translations are not in-memory...
   async setup() {
+    const bo = useI18n()
+    bo.setMissingHandler(handleMissing);
     await loadMessagesPromise;
+
     return {};
   }
 }

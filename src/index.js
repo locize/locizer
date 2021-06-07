@@ -37,6 +37,7 @@ const locizer = {
     this.backend = new LocizeBackend(services, options);
     this.detector = new LanguageDetector(services, options);
     this.lng = options.lng || this.detector.detect();
+    this.referenceLng = options.referenceLng;
 
     LocizeLastUsed.init(options);
     return this;
@@ -67,6 +68,11 @@ const locizer = {
     } else {
       this.backend.getLanguages((err, data) => {
         if (!err) this.publishedLngs = data;
+        if (!this.referenceLng) {
+          Object.keys(data).forEach((l) => {
+            if (data[l].isReferenceLanguage) this.referenceLng = l;
+          });
+        }
         callback(null, data);
       });
     }
@@ -112,7 +118,7 @@ const locizer = {
     } else if (typeof context === 'string') {
       options.tDescription = context;
     }
-    this.backend.create(this.options.referenceLng, namespace, key, value, callback, options);
+    this.backend.create(this.referenceLng, namespace, key, value, callback, options);
     return this;
   },
 
@@ -123,7 +129,7 @@ const locizer = {
     } else if (typeof context === 'string') {
       options.tDescription = context;
     }
-    this.backend.create(this.options.referenceLng, namespace, key, value, callback, options);
+    this.backend.create(this.referenceLng, namespace, key, value, callback, options);
     return this;
   },
 

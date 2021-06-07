@@ -1679,6 +1679,7 @@
       this.backend = new I18NextLocizeBackend(services, options);
       this.detector = new Browser(services, options);
       this.lng = options.lng || this.detector.detect();
+      this.referenceLng = options.referenceLng;
       locizeLastUsed.init(options);
       return this;
     },
@@ -1709,6 +1710,13 @@
       } else {
         this.backend.getLanguages(function (err, data) {
           if (!err) _this2.publishedLngs = data;
+
+          if (!_this2.referenceLng) {
+            Object.keys(data).forEach(function (l) {
+              if (data[l].isReferenceLanguage) _this2.referenceLng = l;
+            });
+          }
+
           callback(null, data);
         });
       }
@@ -1761,7 +1769,7 @@
         options.tDescription = context;
       }
 
-      this.backend.create(this.options.referenceLng, namespace, key, value, callback, options);
+      this.backend.create(this.referenceLng, namespace, key, value, callback, options);
       return this;
     },
     update: function update(namespace, key, value, context, callback) {
@@ -1775,7 +1783,7 @@
         options.tDescription = context;
       }
 
-      this.backend.create(this.options.referenceLng, namespace, key, value, callback, options);
+      this.backend.create(this.referenceLng, namespace, key, value, callback, options);
       return this;
     },
     used: function used(namespace, key) {
