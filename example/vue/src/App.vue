@@ -16,10 +16,8 @@ export default {
   // used in combination with Suspense.
   // useful when translations are not in-memory...
   async setup() {
-    const bo = useI18n()
-    bo.setMissingHandler(handleMissing);
+    useI18n().setMissingHandler(handleMissing);
     await loadMessagesPromise;
-
     return {};
   }
 }
