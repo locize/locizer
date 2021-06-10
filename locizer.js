@@ -1698,7 +1698,7 @@
       this.getLanguages(function (err, lngs) {
         if (_this.isValid(lngs, lng)) return callback(null, lng);
         if (_this.isValid(lngs, getLanguagePartFromCode(lng))) return callback(null, getLanguagePartFromCode(lng));
-        callback(null, _this.options.fallbackLng || Object.keys(lngs)[0]);
+        callback(null, _this.options.fallbackLng || _this["this"].referenceLng || Object.keys(lngs)[0]);
       });
       return this;
     },

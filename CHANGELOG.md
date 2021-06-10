@@ -1,3 +1,7 @@
+### v3.3.1
+
+- add reference language to fallback for getLanguage()
+
 ### v3.3.0
 
 - automatically try to detect referenceLng

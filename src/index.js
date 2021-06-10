@@ -57,7 +57,7 @@ const locizer = {
     this.getLanguages((err, lngs) => {
       if (this.isValid(lngs, lng)) return callback(null, lng);
       if (this.isValid(lngs, getLanguagePartFromCode(lng))) return callback(null, getLanguagePartFromCode(lng));
-      callback(null, this.options.fallbackLng || Object.keys(lngs)[0]);
+      callback(null, this.options.fallbackLng || this.this.referenceLng || Object.keys(lngs)[0]);
     });
     return this;
   },
