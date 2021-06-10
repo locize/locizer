@@ -1,3 +1,7 @@
+This is the example app used in [this blog post](https://locize.com/blog/give-vue-i18n-more-superpowers/).
+
+---
+
 # vue-starter-project
 
 ## Project setup
