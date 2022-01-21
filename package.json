@@ -43,6 +43,7 @@
   "scripts": {
     "tdd": "karma start karma.conf.js",
     "build": "rimraf dist && rollup -c && cpy \"./dist/umd/*.js\" ./",
+    "test": "npm run build",
     "preversion": "npm run test && npm run build && git push",
     "postversion": "git push && git push --tags"
   },
