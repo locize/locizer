@@ -18,9 +18,9 @@
     "url": "git://github.com/locize/locizer.git"
   },
   "dependencies": {
-    "i18next-browser-languagedetector": "6.1.1",
-    "i18next-locize-backend": "4.2.2",
-    "locize-lastused": "3.0.12"
+    "i18next-browser-languagedetector": "6.1.2",
+    "i18next-locize-backend": "4.2.7",
+    "locize-lastused": "3.0.13"
   },
   "devDependencies": {
     "@babel/core": "^7.14.3",

@@ -154,7 +154,7 @@
     __proto__: null
   });
 
-  function _typeof$1(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof$1 = function _typeof(obj) { return typeof obj; }; } else { _typeof$1 = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof$1(obj); }
+  function _typeof$1(obj) { "@babel/helpers - typeof"; return _typeof$1 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof$1(obj); }
   var fetchApi$2;
 
   if (typeof fetch === 'function') {
@@ -272,7 +272,7 @@
 
   function _defineProperties$1(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
-  function _createClass$1(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties$1(Constructor.prototype, protoProps); if (staticProps) _defineProperties$1(Constructor, staticProps); return Constructor; }
+  function _createClass$1(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties$1(Constructor.prototype, protoProps); if (staticProps) _defineProperties$1(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
 
   var getDefaults$2 = function getDefaults() {
     return {
@@ -293,7 +293,8 @@
       onSaved: false,
       reloadInterval: typeof window !== 'undefined' ? false : 60 * 60 * 1000,
       checkForProjectTimeout: 3 * 1000,
-      storageExpiration: 60 * 60 * 1000
+      storageExpiration: 60 * 60 * 1000,
+      writeDebounce: 5 * 1000
     };
   };
 
@@ -335,23 +336,29 @@
         date.setTime(date.getTime() + storageExpiration);
         var expires = "; expires=".concat(date.toGMTString());
         var name = "notExistingLocizeProject_".concat(projectId);
-        document.cookie = "".concat(name, "=").concat(Date.now()).concat(expires, ";path=/");
+
+        try {
+          document.cookie = "".concat(name, "=").concat(Date.now()).concat(expires, ";path=/");
+        } catch (err) {}
       };
 
       isProjectNotExisting = function isProjectNotExisting(projectId) {
         var name = "notExistingLocizeProject_".concat(projectId);
         var nameEQ = "".concat(name, "=");
-        var ca = document.cookie.split(';');
 
-        for (var i = 0; i < ca.length; i++) {
-          var c = ca[i];
+        try {
+          var ca = document.cookie.split(';');
 
-          while (c.charAt(0) === ' ') {
-            c = c.substring(1, c.length);
+          for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+
+            while (c.charAt(0) === ' ') {
+              c = c.substring(1, c.length);
+            }
+
+            if (c.indexOf(nameEQ) === 0) return true;
           }
-
-          if (c.indexOf(nameEQ) === 0) return true;
-        }
+        } catch (err) {}
 
         return false;
       };
@@ -435,7 +442,7 @@
         this.queuedWrites = {
           pending: {}
         };
-        this.debouncedProcess = debounce$1(this.process, 10000);
+        this.debouncedProcess = debounce$1(this.process, this.options.writeDebounce);
         if (this.interval) clearInterval(this.interval);
 
         if (this.options.reloadInterval && this.options.projectId) {
@@ -449,10 +456,13 @@
       value: function reload() {
         var _this2 = this;
 
-        var _this$services = this.services,
-            backendConnector = _this$services.backendConnector,
-            languageUtils = _this$services.languageUtils,
-            logger = _this$services.logger;
+        var _ref = this.services || {
+          logger: console
+        },
+            backendConnector = _ref.backendConnector,
+            languageUtils = _ref.languageUtils,
+            logger = _ref.logger;
+
         if (!backendConnector) return;
         var currentLanguage = backendConnector.language;
         if (currentLanguage && currentLanguage.toLowerCase() === 'cimode') return;
@@ -553,7 +563,10 @@
       value: function checkIfProjectExists(callback) {
         var _this5 = this;
 
-        var logger = this.services.logger;
+        var _ref2 = this.services || {
+          logger: console
+        },
+            logger = _ref2.logger;
 
         if (this.somethingLoaded) {
           if (callback) callback(null);
@@ -581,10 +594,10 @@
       value: function read(language, namespace, callback) {
         var _this6 = this;
 
-        var _ref = this.services || {
+        var _ref3 = this.services || {
           logger: console
         },
-            logger = _ref.logger;
+            logger = _ref3.logger;
 
         var url;
         var options = {};
@@ -824,6 +837,11 @@
         var missings = getPath(this.queuedWrites, [lng, namespace]);
         setPath(this.queuedWrites, [lng, namespace], []);
         var pageSize = 1000;
+        var clbs = missings.filter(function (m) {
+          return m.callback;
+        }).map(function (missing) {
+          return missing.callback;
+        });
 
         if (missings.length) {
           (function () {
@@ -831,8 +849,8 @@
 
             var namespaceSaved = function namespaceSaved() {
               setPath(_this10.queuedWrites, ['locks', lng, namespace], false);
-              missings.forEach(function (missing) {
-                if (missing.callback) missing.callback();
+              clbs.forEach(function (clb) {
+                return clb();
               });
               if (_this10.options.onSaved) _this10.options.onSaved(lng, namespace);
 
@@ -914,6 +932,9 @@
   function _createClass(Constructor, protoProps, staticProps) {
     if (protoProps) _defineProperties(Constructor.prototype, protoProps);
     if (staticProps) _defineProperties(Constructor, staticProps);
+    Object.defineProperty(Constructor, "prototype", {
+      writable: false
+    });
     return Constructor;
   }
 
@@ -1254,9 +1275,7 @@
     };
   }
 
-  var Browser =
-  /*#__PURE__*/
-  function () {
+  var Browser = /*#__PURE__*/function () {
     function Browser(services) {
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
@@ -1401,7 +1420,7 @@
     __proto__: null
   });
 
-  function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+  function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
   var fetchApi;
 
   if (typeof fetch === 'function') {
