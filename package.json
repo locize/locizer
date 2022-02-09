@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "i18next-browser-languagedetector": "6.1.3",
-    "i18next-locize-backend": "4.3.0",
+    "i18next-locize-backend": "5.0.0",
     "locize-lastused": "3.0.13"
   },
   "devDependencies": {
