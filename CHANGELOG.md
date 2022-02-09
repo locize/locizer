@@ -1,3 +1,7 @@
+### v3.3.3
+
+- update locize dependencies
+
 ### v3.3.2
 
 - update locize dependencies

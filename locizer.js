@@ -189,13 +189,20 @@
   if (typeof fetchApi$2 !== 'function') fetchApi$2 = undefined;
 
   var requestWithFetch$1 = function requestWithFetch(options, url, payload, callback) {
+    var headers = {};
+
+    if (options.authorize && options.apiKey) {
+      headers.Authorization = options.apiKey;
+    }
+
+    if (payload || options.setContentTypeJSON) {
+      headers['Content-Type'] = 'application/json';
+    }
+
     fetchApi$2(url, {
       method: payload ? 'POST' : 'GET',
       body: payload ? JSON.stringify(payload) : undefined,
-      headers: {
-        Authorization: options.authorize && options.apiKey ? options.apiKey : undefined,
-        'Content-Type': 'application/json'
-      }
+      headers: headers
     }).then(function (response) {
       var resourceNotExisting = response.headers && response.headers.get('x-cache') === 'Error from cloudfront';
       if (!response.ok) return callback(response.statusText || 'Error', {
@@ -432,10 +439,10 @@
         }
 
         if (typeof callback === 'function') {
-          this.getOptions(function (err, opts) {
+          this.getOptions(function (err, opts, languages) {
             if (err) return callback(err);
             _this.options.referenceLng = options.referenceLng || opts.referenceLng || _this.options.referenceLng;
-            callback(null, opts);
+            callback(null, opts, languages);
           });
         }
 
@@ -555,7 +562,7 @@
             supportedLngs: lngs,
             whitelist: lngs,
             load: hasRegion ? 'all' : 'languageOnly'
-          });
+          }, data);
         });
       }
     }, {
