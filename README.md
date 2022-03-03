@@ -1,8 +1,5 @@
 [![Travis](https://img.shields.io/travis/locize/locizer/master.svg?style=flat-square)](https://travis-ci.org/locize/locizer)
-[![Coveralls](https://img.shields.io/coveralls/locize/locizer/master.svg?style=flat-square)](https://coveralls.io/github/locize/locizer)
 [![npm version](https://img.shields.io/npm/v/locizer.svg?style=flat-square)](https://www.npmjs.com/package/locizer)
-[![Bower](https://img.shields.io/bower/v/locizer.svg)]()
-[![David](https://img.shields.io/david/locize/locizer.svg?style=flat-square)](https://david-dm.org/locize/locizer)
 
 # locizer.js
 
@@ -10,7 +7,7 @@ locizer.js is lightweight client to access data from your locize project and use
 
 # Getting started
 
-Source can be loaded via [npm](https://www.npmjs.com/package/locizer), bower or [downloaded](https://github.com/locize/locizer/blob/master/locizer.min.js) from this repo.
+Source can be loaded via [npm](https://www.npmjs.com/package/locizer) or [downloaded](https://github.com/locize/locizer/blob/master/locizer.min.js) from this repo.
 
 Or load it from the offical npm cdn:
 
