@@ -1714,6 +1714,7 @@
 
       if (!lng) lng = this.lng;
       this.getLanguages(function (err, lngs) {
+        if (err) return callback(err);
         if (_this.isValid(lngs, lng)) return callback(null, lng);
         if (_this.isValid(lngs, getLanguagePartFromCode(lng))) return callback(null, getLanguagePartFromCode(lng));
         callback(null, _this.options.fallbackLng || _this["this"].referenceLng || Object.keys(lngs)[0]);
@@ -1727,6 +1728,7 @@
         callback(null, this.publishedLngs);
       } else {
         this.backend.getLanguages(function (err, data) {
+          if (err) return callback(err);
           if (!err) _this2.publishedLngs = data;
 
           if (!_this2.referenceLng) {
@@ -1760,6 +1762,7 @@
       var _this4 = this;
 
       this.getLanguages(function (err, lngs) {
+        if (err) return callback(err);
         var validLngs = Object.keys(lngs).filter(function (l) {
           return _this4.isValid(lngs, l);
         });

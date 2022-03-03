@@ -55,6 +55,7 @@ const locizer = {
     if (!lng) lng = this.lng;
 
     this.getLanguages((err, lngs) => {
+      if (err) return callback(err);
       if (this.isValid(lngs, lng)) return callback(null, lng);
       if (this.isValid(lngs, getLanguagePartFromCode(lng))) return callback(null, getLanguagePartFromCode(lng));
       callback(null, this.options.fallbackLng || this.this.referenceLng || Object.keys(lngs)[0]);
@@ -67,6 +68,7 @@ const locizer = {
       callback(null, this.publishedLngs);
     } else {
       this.backend.getLanguages((err, data) => {
+        if (err) return callback(err);
         if (!err) this.publishedLngs = data;
         if (!this.referenceLng) {
           Object.keys(data).forEach((l) => {
@@ -94,6 +96,7 @@ const locizer = {
 
   loadAll(ns, callback) {
     this.getLanguages((err, lngs) => {
+      if (err) return callback(err);
       const validLngs = Object.keys(lngs).filter((l) => this.isValid(lngs, l));
 
       asyncEach(validLngs, (l, clb) => {

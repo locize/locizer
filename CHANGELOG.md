@@ -1,3 +1,7 @@
+### v3.3.5
+
+- optimize error scenario, if project id does not exist
+
 ### v3.3.4
 
 - update locize dependencies
