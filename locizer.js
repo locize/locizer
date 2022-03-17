@@ -1729,7 +1729,7 @@
         if (err) return callback(err);
         if (_this.isValid(lngs, lng)) return callback(null, lng);
         if (_this.isValid(lngs, getLanguagePartFromCode(lng))) return callback(null, getLanguagePartFromCode(lng));
-        callback(null, _this.options.fallbackLng || _this["this"].referenceLng || Object.keys(lngs)[0]);
+        callback(null, _this.options.fallbackLng || _this.referenceLng || Object.keys(lngs)[0]);
       });
       return this;
     },
@@ -1764,6 +1764,8 @@
       }
 
       this.getLanguage(lng, function (err, lng) {
+        if (err) return callback(err);
+
         _this3.backend.read(lng, ns, function (err, data) {
           return callback(err, data, lng);
         });

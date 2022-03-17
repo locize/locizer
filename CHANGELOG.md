@@ -1,3 +1,7 @@
+### v3.3.7
+
+- fix typo
+
 ### v3.3.6
 
 - update locize dependencies

@@ -58,7 +58,7 @@ const locizer = {
       if (err) return callback(err);
       if (this.isValid(lngs, lng)) return callback(null, lng);
       if (this.isValid(lngs, getLanguagePartFromCode(lng))) return callback(null, getLanguagePartFromCode(lng));
-      callback(null, this.options.fallbackLng || this.this.referenceLng || Object.keys(lngs)[0]);
+      callback(null, this.options.fallbackLng || this.referenceLng || Object.keys(lngs)[0]);
     });
     return this;
   },
@@ -88,6 +88,7 @@ const locizer = {
     }
 
     this.getLanguage(lng, (err, lng) => {
+      if (err) return callback(err);
       this.backend.read(lng, ns, (err, data) => callback(err, data, lng));
     });
 
