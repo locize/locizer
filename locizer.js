@@ -133,6 +133,17 @@
       return false;
     }, false);
   }
+  function defer() {
+    var res;
+    var rej;
+    var promise = new Promise(function (resolve, reject) {
+      res = resolve;
+      rej = reject;
+    });
+    promise.resolve = res;
+    promise.reject = rej;
+    return promise;
+  }
 
   var fetchApi$3;
   if (typeof fetch === 'function') {
@@ -494,6 +505,17 @@
       value: function getLanguages(callback) {
         var _this3 = this;
 
+        var deferred;
+
+        if (!callback) {
+          deferred = defer();
+
+          callback = function callback(err, ret) {
+            if (err) return deferred.reject(err);
+            deferred.resolve(ret);
+          };
+        }
+
         var isMissing = isMissingOption$1(this.options, ['projectId']);
         if (isMissing) return callback(new Error(isMissing));
         var url = interpolate$1(this.options.getLanguagesPath, {
@@ -522,6 +544,18 @@
             });
           }
 
+          if (ret) {
+            var referenceLng = Object.keys(ret).reduce(function (mem, k) {
+              var item = ret[k];
+              if (item.isReferenceLanguage) mem = k;
+              return mem;
+            }, '');
+
+            if (referenceLng && _this3.options.referenceLng !== referenceLng) {
+              _this3.options.referenceLng = referenceLng;
+            }
+          }
+
           _this3.somethingLoaded = true;
           var clbs = _this3.getLanguagesCalls;
           _this3.getLanguagesCalls = [];
@@ -529,11 +563,23 @@
             return clb(err, ret);
           });
         });
+        return deferred;
       }
     }, {
       key: "getOptions",
       value: function getOptions(callback) {
         var _this4 = this;
+
+        var deferred;
+
+        if (!callback) {
+          deferred = defer();
+
+          callback = function callback(err, ret) {
+            if (err) return deferred.reject(err);
+            deferred.resolve(ret);
+          };
+        }
 
         this.getLanguages(function (err, data) {
           if (err) return callback(err);
@@ -543,11 +589,6 @@
             return callback(new Error('was unable to load languages via API'));
           }
 
-          var referenceLng = keys.reduce(function (mem, k) {
-            var item = data[k];
-            if (item.isReferenceLanguage) mem = k;
-            return mem;
-          }, '');
           var lngs = keys.reduce(function (mem, k) {
             var item = data[k];
 
@@ -562,12 +603,13 @@
             return mem;
           }, false);
           callback(null, {
-            fallbackLng: referenceLng,
-            referenceLng: referenceLng,
+            fallbackLng: _this4.options.referenceLng,
+            referenceLng: _this4.options.referenceLng,
             supportedLngs: lngs,
             load: hasRegion ? 'all' : 'languageOnly'
           }, data);
         });
+        return deferred;
       }
     }, {
       key: "checkIfProjectExists",
@@ -1093,7 +1135,13 @@
       var found;
 
       if (typeof window !== 'undefined') {
-        var query = window.location.search.substring(1);
+        var search = window.location.search;
+
+        if (!window.location.search && window.location.hash && window.location.hash.indexOf('?') > -1) {
+          search = window.location.hash.substring(window.location.hash.indexOf('?'));
+        }
+
+        var query = search.substring(1);
         var params = query.split('&');
 
         for (var i = 0; i < params.length; i++) {
