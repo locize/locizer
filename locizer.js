@@ -415,6 +415,11 @@
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         var allOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
         var callback = arguments.length > 3 ? arguments[3] : undefined;
+
+        if (!options.referenceLng && allOptions.fallbackLng && Array.isArray(allOptions.fallbackLng) && allOptions.fallbackLng[0] !== 'dev') {
+          options.referenceLng = allOptions.fallbackLng[0];
+        }
+
         this.services = services;
         this.options = defaults$2(options, this.options || {}, getDefaults$2());
         this.allOptions = allOptions;
@@ -1608,6 +1613,27 @@
   var locizeLastUsed = {
     init: function init(options) {
       var isI18next = options.t && typeof options.t === 'function';
+
+      if (isI18next && !options.options.locizeLastUsed.projectId && options.options.backend.projectId) {
+        options.options.locizeLastUsed.projectId = options.options.backend.projectId;
+      }
+
+      if (isI18next && !options.options.locizeLastUsed.version && options.options.backend.version) {
+        options.options.locizeLastUsed.version = options.options.backend.version;
+      }
+
+      if (isI18next && !options.options.locizeLastUsed.apiKey && options.options.backend.apiKey) {
+        options.options.locizeLastUsed.apiKey = options.options.backend.apiKey;
+      }
+
+      if (isI18next && !options.options.locizeLastUsed.referenceLng && options.options.backend.referenceLng) {
+        options.options.locizeLastUsed.referenceLng = options.options.backend.referenceLng;
+      }
+
+      if (isI18next && !options.options.locizeLastUsed.referenceLng && options.options.fallbackLng && Array.isArray(options.options.fallbackLng) && options.options.fallbackLng[0] !== 'dev') {
+        options.options.locizeLastUsed.referenceLng = options.options.fallbackLng[0];
+      }
+
       this.options = isI18next ? defaults(options.options.locizeLastUsed, this.options || {}, getDefaults()) : defaults(options, this.options || {}, getDefaults());
       var hostname = typeof window !== 'undefined' && window.location && window.location.hostname;
 
