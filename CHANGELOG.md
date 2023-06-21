@@ -1,3 +1,7 @@
+### v3.3.10
+
+- update deps
+
 ### v3.3.9
 
 - update i18next deps

@@ -1,14 +1,16 @@
-import babel from 'rollup-plugin-babel';
-import nodeResolve from 'rollup-plugin-node-resolve';
-import { terser } from 'rollup-plugin-terser';
-import pkg from './package.json';
+/* eslint-disable import/no-extraneous-dependencies */
+import babel from '@rollup/plugin-babel';
+import nodeResolve from '@rollup/plugin-node-resolve';
+import terser from '@rollup/plugin-terser';
+import { readFileSync } from 'fs';
+
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url)));
 
 const getBabelOptions = ({ useESModules }) => ({
   exclude: /node_modules/,
-  runtimeHelpers: true,
-  plugins: [
-    ['@babel/transform-runtime', { useESModules }]
-  ]
+  babelHelpers: 'runtime',
+  plugins: [['@babel/transform-runtime', { useESModules }]],
+  comments: false
 });
 
 const input = './src/index.js';
