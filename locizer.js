@@ -176,7 +176,7 @@
     __proto__: null
   });
 
-  function _typeof$2(obj) { "@babel/helpers - typeof"; return _typeof$2 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof$2(obj); }
+  function _typeof$2(o) { "@babel/helpers - typeof"; return _typeof$2 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof$2(o); }
   var fetchApi$2;
   if (typeof fetch === 'function') {
     if (typeof global !== 'undefined' && global.fetch) {
@@ -207,17 +207,16 @@
   if (typeof fetchApi$2 !== 'function') fetchApi$2 = undefined;
   var requestWithFetch$1 = function requestWithFetch(options, url, payload, callback) {
     var headers = {};
+    if (typeof window === 'undefined' && typeof process !== 'undefined' && process.versions && process.versions.node) {
+      headers['User-Agent'] = "i18next-locize-backend (node/".concat(process.version, "; ").concat(process.platform, " ").concat(process.arch, ")");
+    }
     if (options.authorize && options.apiKey) {
       headers.Authorization = options.apiKey;
     }
     if (payload || options.setContentTypeJSON) {
       headers['Content-Type'] = 'application/json';
     }
-    fetchApi$2(url, {
-      method: payload ? 'POST' : 'GET',
-      body: payload ? JSON.stringify(payload) : undefined,
-      headers: headers
-    }).then(function (response) {
+    var resolver = function resolver(response) {
       var resourceNotExisting = response.headers && response.headers.get('x-cache') === 'Error from cloudfront';
       if (!response.ok) return callback(response.statusText || 'Error', {
         status: response.status,
@@ -230,7 +229,20 @@
           resourceNotExisting: resourceNotExisting
         });
       }).catch(callback);
-    }).catch(callback);
+    };
+    if (typeof fetch === 'function') {
+      fetch(url, {
+        method: payload ? 'POST' : 'GET',
+        body: payload ? JSON.stringify(payload) : undefined,
+        headers: headers
+      }).then(resolver).catch(callback);
+    } else {
+      fetchApi$2(url, {
+        method: payload ? 'POST' : 'GET',
+        body: payload ? JSON.stringify(payload) : undefined,
+        headers: headers
+      }).then(resolver).catch(callback);
+    }
   };
   var requestWithXmlHttpRequest$1 = function requestWithXmlHttpRequest(options, url, payload, callback) {
     try {
@@ -278,7 +290,7 @@
     callback(new Error('No fetch and no xhr implementation found!'));
   };
 
-  function _typeof$1(obj) { "@babel/helpers - typeof"; return _typeof$1 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof$1(obj); }
+  function _typeof$1(o) { "@babel/helpers - typeof"; return _typeof$1 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof$1(o); }
   function _classCallCheck$1(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
   function _defineProperties$1(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
   function _createClass$1(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties$1(Constructor.prototype, protoProps); if (staticProps) _defineProperties$1(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
@@ -1217,9 +1229,13 @@
       lookupSessionStorage: 'i18nextLng',
       // cache user language
       caches: ['localStorage'],
-      excludeCacheFor: ['cimode']
+      excludeCacheFor: ['cimode'],
       // cookieMinutes: 10,
       // cookieDomain: 'myDomain'
+
+      convertDetectedLanguage: function convertDetectedLanguage(l) {
+        return l;
+      }
     };
   }
   var Browser = /*#__PURE__*/function () {
@@ -1239,6 +1255,11 @@
           languageUtils: {}
         }; // this way the language detector can be used without i18next
         this.options = defaults$1(options, this.options || {}, getDefaults$1());
+        if (typeof this.options.convertDetectedLanguage === 'string' && this.options.convertDetectedLanguage.indexOf('15897') > -1) {
+          this.options.convertDetectedLanguage = function (l) {
+            return l.replace('-', '_');
+          };
+        }
 
         // backwards compatibility
         if (this.options.lookupFromUrlIndex) this.options.lookupFromPathIndex = this.options.lookupFromUrlIndex;
@@ -1269,6 +1290,9 @@
             if (lookup && typeof lookup === 'string') lookup = [lookup];
             if (lookup) detected = detected.concat(lookup);
           }
+        });
+        detected = detected.map(function (d) {
+          return _this.options.convertDetectedLanguage(d);
         });
         if (this.services.languageUtils.getBestMatchFromCodes) return detected; // new i18next v19.5.0
         return detected.length > 0 ? detected[0] : null; // a little backward compatibility
@@ -1359,7 +1383,7 @@
     __proto__: null
   });
 
-  function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
+  function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
   var fetchApi;
   if (typeof fetch === 'function') {
     if (typeof global !== 'undefined' && global.fetch) {
@@ -1389,14 +1413,7 @@
   if (!fetchApi && fetchNode && !XmlHttpRequestApi && !ActiveXObjectApi) fetchApi = fetchNode;
   if (typeof fetchApi !== 'function') fetchApi = undefined;
   var requestWithFetch = function requestWithFetch(options, url, payload, callback) {
-    fetchApi(url, {
-      method: payload ? 'POST' : 'GET',
-      body: payload ? JSON.stringify(payload) : undefined,
-      headers: {
-        Authorization: options.authorize && options.apiKey ? options.apiKey : undefined,
-        'Content-Type': 'application/json'
-      }
-    }).then(function (response) {
+    var resolver = function resolver(response) {
       var resourceNotExisting = response.headers && response.headers.get('x-cache') === 'Error from cloudfront';
       if (!response.ok) return callback(response.statusText || 'Error', {
         status: response.status,
@@ -1409,7 +1426,27 @@
           resourceNotExisting: resourceNotExisting
         });
       }).catch(callback);
-    }).catch(callback);
+    };
+    var headers = {
+      Authorization: options.authorize && options.apiKey ? options.apiKey : undefined,
+      'Content-Type': 'application/json'
+    };
+    if (typeof window === 'undefined' && typeof process !== 'undefined' && process.versions && process.versions.node) {
+      headers['User-Agent'] = "locize-lastused (node/".concat(process.version, "; ").concat(process.platform, " ").concat(process.arch, ")");
+    }
+    if (typeof fetch === 'function') {
+      fetch(url, {
+        method: payload ? 'POST' : 'GET',
+        body: payload ? JSON.stringify(payload) : undefined,
+        headers: headers
+      }).then(resolver).catch(callback);
+    } else {
+      fetchApi(url, {
+        method: payload ? 'POST' : 'GET',
+        body: payload ? JSON.stringify(payload) : undefined,
+        headers: headers
+      }).then(resolver).catch(callback);
+    }
   };
   var requestWithXmlHttpRequest = function requestWithXmlHttpRequest(options, url, payload, callback) {
     try {
