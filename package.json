@@ -19,8 +19,8 @@
   },
   "dependencies": {
     "i18next-browser-languagedetector": "7.1.0",
-    "i18next-locize-backend": "6.3.0",
-    "locize-lastused": "3.3.0"
+    "i18next-locize-backend": "6.3.1",
+    "locize-lastused": "3.3.2"
   },
   "devDependencies": {
     "@babel/core": "^7.22.5",

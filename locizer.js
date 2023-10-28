@@ -207,8 +207,8 @@
   if (typeof fetchApi$2 !== 'function') fetchApi$2 = undefined;
   var requestWithFetch$1 = function requestWithFetch(options, url, payload, callback) {
     var headers = {};
-    if (typeof window === 'undefined' && typeof process !== 'undefined' && process.versions && process.versions.node) {
-      headers['User-Agent'] = "i18next-locize-backend (node/".concat(process.version, "; ").concat(process.platform, " ").concat(process.arch, ")");
+    if (typeof window === 'undefined' && typeof global !== 'undefined' && typeof global.process !== 'undefined' && global.process.versions && global.process.versions.node) {
+      headers['User-Agent'] = "i18next-locize-backend (node/".concat(global.process.version, "; ").concat(global.process.platform, " ").concat(global.process.arch, ")");
     }
     if (options.authorize && options.apiKey) {
       headers.Authorization = options.apiKey;
@@ -1431,8 +1431,8 @@
       Authorization: options.authorize && options.apiKey ? options.apiKey : undefined,
       'Content-Type': 'application/json'
     };
-    if (typeof window === 'undefined' && typeof process !== 'undefined' && process.versions && process.versions.node) {
-      headers['User-Agent'] = "locize-lastused (node/".concat(process.version, "; ").concat(process.platform, " ").concat(process.arch, ")");
+    if (typeof window === 'undefined' && typeof global !== 'undefined' && typeof global.process !== 'undefined' && global.process.versions && global.process.versions.node) {
+      headers['User-Agent'] = "locize-lastused (node/".concat(global.process.version, "; ").concat(global.process.platform, " ").concat(global.process.arch, ")");
     }
     if (typeof fetch === 'function') {
       fetch(url, {
