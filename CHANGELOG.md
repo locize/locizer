@@ -1,3 +1,7 @@
+### 3.4.2
+
+- update deps
+
 ### 3.4.1
 
 - update deps

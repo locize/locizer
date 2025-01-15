@@ -4,45 +4,39 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.locizer = factory());
 })(this, (function () { 'use strict';
 
-  function _typeof$3(obj) {
+  function _typeof$3(o) {
     "@babel/helpers - typeof";
 
-    return _typeof$3 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
-      return typeof obj;
-    } : function (obj) {
-      return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    }, _typeof$3(obj);
+    return _typeof$3 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+      return typeof o;
+    } : function (o) {
+      return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+    }, _typeof$3(o);
   }
 
-  function _toPrimitive$1(input, hint) {
-    if (_typeof$3(input) !== "object" || input === null) return input;
-    var prim = input[Symbol.toPrimitive];
-    if (prim !== undefined) {
-      var res = prim.call(input, hint || "default");
-      if (_typeof$3(res) !== "object") return res;
+  function toPrimitive(t, r) {
+    if ("object" != _typeof$3(t) || !t) return t;
+    var e = t[Symbol.toPrimitive];
+    if (void 0 !== e) {
+      var i = e.call(t, r || "default");
+      if ("object" != _typeof$3(i)) return i;
       throw new TypeError("@@toPrimitive must return a primitive value.");
     }
-    return (hint === "string" ? String : Number)(input);
+    return ("string" === r ? String : Number)(t);
   }
 
-  function _toPropertyKey$1(arg) {
-    var key = _toPrimitive$1(arg, "string");
-    return _typeof$3(key) === "symbol" ? key : String(key);
+  function toPropertyKey(t) {
+    var i = toPrimitive(t, "string");
+    return "symbol" == _typeof$3(i) ? i : i + "";
   }
 
-  function _defineProperty(obj, key, value) {
-    key = _toPropertyKey$1(key);
-    if (key in obj) {
-      Object.defineProperty(obj, key, {
-        value: value,
-        enumerable: true,
-        configurable: true,
-        writable: true
-      });
-    } else {
-      obj[key] = value;
-    }
-    return obj;
+  function _defineProperty(e, r, t) {
+    return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+      value: t,
+      enumerable: !0,
+      configurable: !0,
+      writable: !0
+    }) : e[r] = t, e;
   }
 
   var arr$2 = [];
@@ -165,7 +159,7 @@
     }
   }
 
-  if (typeof require !== 'undefined' && (typeof window === 'undefined' || typeof window.document === 'undefined')) {
+  if (typeof require !== 'undefined' && typeof window === 'undefined') {
     var f$1 = fetchApi$3 || require('cross-fetch');
     if (f$1.default) f$1 = f$1.default;
     exports.default = f$1;
@@ -291,11 +285,11 @@
   };
 
   function _typeof$1(o) { "@babel/helpers - typeof"; return _typeof$1 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof$1(o); }
-  function _classCallCheck$1(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-  function _defineProperties$1(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
-  function _createClass$1(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties$1(Constructor.prototype, protoProps); if (staticProps) _defineProperties$1(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
-  function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof$1(key) === "symbol" ? key : String(key); }
-  function _toPrimitive(input, hint) { if (_typeof$1(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof$1(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
+  function _classCallCheck$1(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+  function _defineProperties$1(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
+  function _createClass$1(e, r, t) { return r && _defineProperties$1(e.prototype, r), t && _defineProperties$1(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+  function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof$1(i) ? i : i + ""; }
+  function _toPrimitive(t, r) { if ("object" != _typeof$1(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof$1(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
   var getDefaults$2 = function getDefaults() {
     return {
       loadPath: 'https://api.locize.app/{{projectId}}/{{version}}/{{lng}}/{{ns}}',
@@ -421,7 +415,7 @@
         this.init(services, options, allOptions, callback);
       }
     }
-    _createClass$1(I18NextLocizeBackend, [{
+    return _createClass$1(I18NextLocizeBackend, [{
       key: "init",
       value: function init(services) {
         var _this = this;
@@ -475,6 +469,7 @@
           this.interval = setInterval(function () {
             return _this.reload();
           }, this.options.reloadInterval);
+          if (_typeof$1(this.interval) === 'object' && typeof this.interval.unref === 'function') this.interval.unref();
         }
       }
     }, {
@@ -597,7 +592,7 @@
           callback(null, {
             fallbackLng: _this4.options.referenceLng,
             referenceLng: _this4.options.referenceLng,
-            supportedLngs: lngs,
+            supportedLngs: lngs.length === 0 && _this4.options.referenceLng ? [_this4.options.referenceLng] : lngs,
             load: hasRegion ? 'all' : 'languageOnly'
           }, data);
         });
@@ -710,10 +705,16 @@
               resourceNotExisting: resourceNotExisting
             });
           }
-          if (!res && err && err.message && err.message.indexOf('Failed to fetch') > -1) {
-            return callback('failed loading ' + url, true, {
-              resourceNotExisting: resourceNotExisting
+          if (!res && err && err.message) {
+            var errorMessage = err.message.toLowerCase();
+            var isNetworkError = ['failed', 'fetch', 'network', 'load'].find(function (term) {
+              return errorMessage.indexOf(term) > -1;
             });
+            if (isNetworkError) {
+              return callback('failed loading ' + url + ': ' + err.message, true, {
+                resourceNotExisting: resourceNotExisting
+              });
+            }
           }
           if (err) return callback(err, false);
           var ret, parseErr;
@@ -922,32 +923,23 @@
         this.debouncedProcess();
       }
     }]);
-    return I18NextLocizeBackend;
   }();
   I18NextLocizeBackend.type = 'backend';
 
-  function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
+  function _classCallCheck(a, n) {
+    if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
   }
 
-  function _defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, _toPropertyKey$1(descriptor.key), descriptor);
+  function _defineProperties(e, r) {
+    for (var t = 0; t < r.length; t++) {
+      var o = r[t];
+      o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, toPropertyKey(o.key), o);
     }
   }
-  function _createClass(Constructor, protoProps, staticProps) {
-    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) _defineProperties(Constructor, staticProps);
-    Object.defineProperty(Constructor, "prototype", {
-      writable: false
-    });
-    return Constructor;
+  function _createClass(e, r, t) {
+    return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", {
+      writable: !1
+    }), e;
   }
 
   var arr$1 = [];
@@ -1035,9 +1027,7 @@
       var ca = document.cookie.split(';');
       for (var i = 0; i < ca.length; i++) {
         var c = ca[i];
-        while (c.charAt(0) === ' ') {
-          c = c.substring(1, c.length);
-        }
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
         if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
       }
       return null;
@@ -1220,9 +1210,19 @@
     }
   };
 
+  // some environments, throws when accessing document.cookie
+  var canCookies = false;
+  try {
+    // eslint-disable-next-line no-unused-expressions
+    document.cookie;
+    canCookies = true;
+    // eslint-disable-next-line no-empty
+  } catch (e) {}
+  var order = ['querystring', 'cookie', 'localStorage', 'sessionStorage', 'navigator', 'htmlTag'];
+  if (!canCookies) order.splice(1, 1);
   function getDefaults$1() {
     return {
-      order: ['querystring', 'cookie', 'localStorage', 'sessionStorage', 'navigator', 'htmlTag'],
+      order: order,
       lookupQuerystring: 'lng',
       lookupCookie: 'i18next',
       lookupLocalStorage: 'i18nextLng',
@@ -1246,7 +1246,7 @@
       this.detectors = {};
       this.init(services, options);
     }
-    _createClass(Browser, [{
+    return _createClass(Browser, [{
       key: "init",
       value: function init(services) {
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -1277,6 +1277,7 @@
       key: "addDetector",
       value: function addDetector(detector) {
         this.detectors[detector.name] = detector;
+        return this;
       }
     }, {
       key: "detect",
@@ -1309,7 +1310,6 @@
         });
       }
     }]);
-    return Browser;
   }();
   Browser.type = 'languageDetector';
 
@@ -1372,7 +1372,7 @@
     }
   }
 
-  if (typeof require !== 'undefined' && (typeof window === 'undefined' || typeof window.document === 'undefined')) {
+  if (typeof require !== 'undefined' && typeof window === 'undefined') {
     var f = fetchApi$1 || require('cross-fetch');
     if (f.default) f = f.default;
     exports.default = f;
