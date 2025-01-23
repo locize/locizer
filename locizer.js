@@ -148,15 +148,11 @@
     return promise;
   }
 
-  var fetchApi$3;
-  if (typeof fetch === 'function') {
-    if (typeof global !== 'undefined' && global.fetch) {
-      fetchApi$3 = global.fetch;
-    } else if (typeof window !== 'undefined' && window.fetch) {
-      fetchApi$3 = window.fetch;
-    } else {
-      fetchApi$3 = fetch;
-    }
+  var fetchApi$3 = typeof fetch === 'function' ? fetch : undefined;
+  if (typeof global !== 'undefined' && global.fetch) {
+    fetchApi$3 = global.fetch;
+  } else if (typeof window !== 'undefined' && window.fetch) {
+    fetchApi$3 = window.fetch;
   }
 
   if (typeof require !== 'undefined' && typeof window === 'undefined') {
@@ -171,15 +167,11 @@
   });
 
   function _typeof$2(o) { "@babel/helpers - typeof"; return _typeof$2 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof$2(o); }
-  var fetchApi$2;
-  if (typeof fetch === 'function') {
-    if (typeof global !== 'undefined' && global.fetch) {
-      fetchApi$2 = global.fetch;
-    } else if (typeof window !== 'undefined' && window.fetch) {
-      fetchApi$2 = window.fetch;
-    } else {
-      fetchApi$2 = fetch;
-    }
+  var fetchApi$2 = typeof fetch === 'function' ? fetch : undefined;
+  if (typeof global !== 'undefined' && global.fetch) {
+    fetchApi$2 = global.fetch;
+  } else if (typeof window !== 'undefined' && window.fetch) {
+    fetchApi$2 = window.fetch;
   }
   var XmlHttpRequestApi$1;
   if (typeof XMLHttpRequest === 'function' || (typeof XMLHttpRequest === "undefined" ? "undefined" : _typeof$2(XMLHttpRequest)) === 'object') {
@@ -1361,15 +1353,11 @@
     return ret;
   }
 
-  var fetchApi$1;
-  if (typeof fetch === 'function') {
-    if (typeof global !== 'undefined' && global.fetch) {
-      fetchApi$1 = global.fetch;
-    } else if (typeof window !== 'undefined' && window.fetch) {
-      fetchApi$1 = window.fetch;
-    } else {
-      fetchApi$1 = fetch;
-    }
+  var fetchApi$1 = typeof fetch === 'function' ? fetch : undefined;
+  if (typeof global !== 'undefined' && global.fetch) {
+    fetchApi$1 = global.fetch;
+  } else if (typeof window !== 'undefined' && window.fetch) {
+    fetchApi$1 = window.fetch;
   }
 
   if (typeof require !== 'undefined' && typeof window === 'undefined') {
@@ -1384,15 +1372,11 @@
   });
 
   function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
-  var fetchApi;
-  if (typeof fetch === 'function') {
-    if (typeof global !== 'undefined' && global.fetch) {
-      fetchApi = global.fetch;
-    } else if (typeof window !== 'undefined' && window.fetch) {
-      fetchApi = window.fetch;
-    } else {
-      fetchApi = fetch;
-    }
+  var fetchApi = typeof fetch === 'function' ? fetch : undefined;
+  if (typeof global !== 'undefined' && global.fetch) {
+    fetchApi = global.fetch;
+  } else if (typeof window !== 'undefined' && window.fetch) {
+    fetchApi = window.fetch;
   }
   var XmlHttpRequestApi;
   if (typeof XMLHttpRequest === 'function' || (typeof XMLHttpRequest === "undefined" ? "undefined" : _typeof(XMLHttpRequest)) === 'object') {
