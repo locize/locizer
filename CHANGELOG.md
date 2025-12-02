@@ -1,3 +1,7 @@
+### 3.5.1
+
+- update i18next-locize-backend dep
+
 ### 3.5.0
 
 - update deps
