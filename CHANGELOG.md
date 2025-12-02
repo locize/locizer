@@ -1,3 +1,7 @@
+### 3.5.0
+
+- update deps
+
 ### 3.4.3
 
 - update deps (before next major versions)

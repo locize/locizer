@@ -39,7 +39,7 @@ export default [
 
   {
     input,
-    output: { format: 'umd', name, file: `dist/umd/${name}.js` },
+    output: { format: 'umd', name, file: `dist/umd/${name}.js`, inlineDynamicImports: true },
     plugins: [
       babel(getBabelOptions({ useESModules: true })),
       nodeResolve()
@@ -47,7 +47,7 @@ export default [
   },
   {
     input,
-    output: { format: 'umd', name, file: `dist/umd/${name}.min.js` },
+    output: { format: 'umd', name, file: `dist/umd/${name}.min.js`, inlineDynamicImports: true },
     plugins: [
       babel(getBabelOptions({ useESModules: true })),
       nodeResolve(),
