@@ -1,22 +1,21 @@
-/* eslint-disable import/no-extraneous-dependencies */
-import babel from '@rollup/plugin-babel';
-import nodeResolve from '@rollup/plugin-node-resolve';
-import terser from '@rollup/plugin-terser';
-import { readFileSync } from 'fs';
+import babel from '@rollup/plugin-babel'
+import nodeResolve from '@rollup/plugin-node-resolve'
+import terser from '@rollup/plugin-terser'
+import { readFileSync } from 'fs'
 
-const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url)));
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url)))
 
 const getBabelOptions = ({ useESModules }) => ({
   exclude: /node_modules/,
   babelHelpers: 'runtime',
   plugins: [['@babel/transform-runtime', { useESModules }]],
   comments: false
-});
+})
 
-const input = './src/index.js';
+const input = './src/index.js'
 const name = 'locizer'
 // check relative and absolute paths for windows and unix
-const external = id => !id.startsWith('.') && !id.startsWith('/') && !id.includes(':');
+const external = id => !id.startsWith('.') && !id.startsWith('/') && !id.includes(':')
 
 export default [
   {

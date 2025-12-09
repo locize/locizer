@@ -76,7 +76,10 @@ Or load it from the offical npm cdn:
   cookieDomain: 'myDomain',
 
   // optional htmlTag with lang attribute, the default is:
-  htmlTag: document.documentElement
+  htmlTag: document.documentElement,
+
+  cdnType: 'standard', // default 'pro'
+  noCache: false // fetches non cached translations (do not set to true in production)
 }
 ```
 
