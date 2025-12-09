@@ -10,6 +10,7 @@ bin/
 bower.json
 gulpfile.js
 karma.conf.js
+eslint.config.js
 
 
 # Deployment
