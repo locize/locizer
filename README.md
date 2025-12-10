@@ -22,8 +22,8 @@ Or load it from the offical npm cdn:
       locizer
         .init({
           fallbackLng: "en",
-          referenceLng: "en",
-          projectId: "[your project id]"
+          projectId: "[your project id]",
+          cdnType: 'standard'
         })
         .load("translation", function(err, translations, lng) {
           // feed the translations to formatjs, polyglot,...
@@ -50,6 +50,8 @@ Or load it from the offical npm cdn:
   apiKey: '27e9ecff-8926-43b0-80fd-e683abe49297', // only needed if you want to add new keys via locizer - remove on production!
   version: 'latest', // version to load from locize
   private: false, // set true if using locize private publish
+  cdnType: 'standard', // default 'pro'
+  noCache: false // fetches non cached translations (do not set to true in production)
 
   // hostnames that are allowed to send last used data
   // please keep those to your local system, staging, test servers (not production)
@@ -76,10 +78,7 @@ Or load it from the offical npm cdn:
   cookieDomain: 'myDomain',
 
   // optional htmlTag with lang attribute, the default is:
-  htmlTag: document.documentElement,
-
-  cdnType: 'standard', // default 'pro'
-  noCache: false // fetches non cached translations (do not set to true in production)
+  htmlTag: document.documentElement
 }
 ```
 
