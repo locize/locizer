@@ -93,7 +93,8 @@ import { createI18n } from 'vue-i18n'
 import locizer from 'locizer'
 
 locizer.init({
-  projectId: '1fb2c780-f038-4ffe-b988-5d9fe2e3ba2d'
+  projectId: '1fb2c780-f038-4ffe-b988-5d9fe2e3ba2d',
+  cdnType: 'standard'
 });
 
 export const i18n = createI18n({
