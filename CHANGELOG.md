@@ -1,3 +1,7 @@
+### 4.0.2
+
+- update i18next-locize-backend dep
+
 ### 4.0.1
 
 - update i18next-locize-backend dep
