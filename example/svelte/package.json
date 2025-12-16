@@ -20,7 +20,7 @@
     "locize": "2.2.4",
     "locizer": "3.3.7",
     "sirv-cli": "2.0.2",
-    "svelte": "3.46.4",
+    "svelte": "4.2.19",
     "svelte-i18n": "3.4.0"
   }
 }
