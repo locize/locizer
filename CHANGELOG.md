@@ -1,3 +1,7 @@
+### 4.0.1
+
+- update i18next-locize-backend dep
+
 ### 4.0.0
 
 - log/error is shown if cdnType is not defined, because of changing default to 'standard' instead of 'pro'
