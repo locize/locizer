@@ -50,7 +50,7 @@ Or load it from the offical npm cdn:
   apiKey: '27e9ecff-8926-43b0-80fd-e683abe49297', // only needed if you want to add new keys via locizer - remove on production!
   version: 'latest', // version to load from locize
   private: false, // set true if using locize private publish
-  cdnType: 'standard', // default 'pro'
+  cdnType: 'pro', // default 'standard'
   noCache: false // fetches non cached translations (do not set to true in production)
 
   // hostnames that are allowed to send last used data

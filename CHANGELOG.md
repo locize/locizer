@@ -1,3 +1,8 @@
+### 5.0.0
+
+- update i18next-locize-backend dep
+- changed default cdnType to "standard" instead of "prod"
+
 ### 4.0.2
 
 - update i18next-locize-backend dep

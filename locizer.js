@@ -312,7 +312,7 @@
   function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof$1(i) ? i : i + ""; }
   function _toPrimitive(t, r) { if ("object" != _typeof$1(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof$1(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
   var getApiPaths = function getApiPaths(cdnType) {
-    if (!cdnType) cdnType = 'pro';
+    if (!cdnType) cdnType = 'standard';
     return {
       loadPath: "https://api".concat(cdnType === 'standard' ? '.lite' : '', ".locize.app/{{projectId}}/{{version}}/{{lng}}/{{ns}}"),
       privatePath: "https://api".concat(cdnType === 'standard' ? '.lite' : '', ".locize.app/private/{{projectId}}/{{version}}/{{lng}}/{{ns}}"),
@@ -322,7 +322,7 @@
     };
   };
   var getDefaults$2 = function getDefaults(cdnType) {
-    if (!cdnType) cdnType = 'pro';
+    if (!cdnType) cdnType = 'standard';
     return defaults$2({
       cdnType: cdnType,
       noCache: false,
@@ -478,12 +478,6 @@
         Object.keys(apiPaths).forEach(function (ap) {
           if (!orgPassedOptions[ap]) _this.options[ap] = apiPaths[ap];
         });
-        if (!orgPassedOptions.cdnType) {
-          console.error('[i18next-locize-backend] In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your options to avoid missing translations.');
-        }
-        if (this.options.pull) {
-          console.warn('The pull API was removed use "private: true" option instead: https://www.locize.com/docs/api#fetch-private-namespace-resources');
-        }
         if (allOptions.debug && orgPassedOptions.noCache === undefined && this.options.cdnType === 'standard') {
           this.options.noCache = true;
         }
