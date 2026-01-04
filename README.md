@@ -1,4 +1,3 @@
-[![Travis](https://img.shields.io/travis/locize/locizer/master.svg?style=flat-square)](https://travis-ci.org/locize/locizer)
 [![npm version](https://img.shields.io/npm/v/locizer.svg?style=flat-square)](https://www.npmjs.com/package/locizer)
 
 # locizer.js
