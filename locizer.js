@@ -574,7 +574,7 @@
           this.isProjectNotExisting = true;
         }
         if (this.isProjectNotExisting) {
-          callback(new Error(this.isProjectNotExistingErrorMessage));
+          callback(new Error(this.isProjectNotExistingErrorMessage || "locize project ".concat(this.options.projectId, " does not exist!")));
           return deferred;
         }
         this.getLanguagesCalls = this.getLanguagesCalls || [];
@@ -583,7 +583,6 @@
         this.loadUrl({}, url, function (err, ret, info) {
           if (!_this3.somethingLoaded && info && info.resourceNotExisting) {
             _this3.isProjectNotExisting = true;
-            _this3.storage.setProjectNotExisting(_this3.options.projectId);
             var errMsg = "locize project ".concat(_this3.options.projectId, " does not exist!");
             _this3.isProjectNotExistingErrorMessage = errMsg;
             var cdnTypeAlt = _this3.options.cdnType === 'standard' ? 'pro' : 'standard';
@@ -595,6 +594,9 @@
               if (!errAlt && retAlt && (!infoAlt || !infoAlt.resourceNotExisting)) {
                 errMsg += " It seems you're using the wrong cdnType. Your locize project is configured to use \"".concat(cdnTypeAlt, "\" but here you've configured \"").concat(_this3.options.cdnType, "\".");
                 _this3.isProjectNotExistingErrorMessage = errMsg;
+              } else if (!_this3.somethingLoaded && infoAlt && infoAlt.resourceNotExisting) {
+                _this3.isProjectNotExisting = true;
+                _this3.storage.setProjectNotExisting(_this3.options.projectId);
               }
               var e = new Error(errMsg);
               var clbs = _this3.getLanguagesCalls;
@@ -743,7 +745,7 @@
           this.isProjectNotExisting = true;
         }
         if (this.isProjectNotExisting) {
-          var err = new Error(this.isProjectNotExistingErrorMessage);
+          var err = new Error(this.isProjectNotExistingErrorMessage || "locize project ".concat(this.options.projectId, " does not exist!"));
           if (logger) logger.error(err.message);
           if (callback) callback(err);
           return;
