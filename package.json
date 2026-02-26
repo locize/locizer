@@ -40,7 +40,7 @@
     "mocha": "11.7.5",
     "neostandard": "0.12.2",
     "rimraf": "6.1.2",
-    "rollup": "3.29.5"
+    "rollup": "3.30.0"
   },
   "scripts": {
     "lint": "eslint .",
