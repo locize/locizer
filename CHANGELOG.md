@@ -1,3 +1,12 @@
+### 5.0.2
+
+Security hardening — no GHSA on its own (the real URL-building now lives in the upstream `i18next-locize-backend@9.0.2` which has its own [GHSA-mgcp-mfp8-3q45](https://github.com/locize/i18next-locize-backend/security/advisories/GHSA-mgcp-mfp8-3q45); the changes here are defence-in-depth and inherited-fix plumbing).
+
+- security (defence-in-depth): guard `interpolate()` against prototype-chain lookups — `data['__proto__']` / `['constructor']` / `['prototype']` no longer dereference the pollutable prototype chain. locizer passes this helper into `i18next-locize-backend` as a service; the backend already applies its own URL-specific sanitisation, this is an extra layer for any future code path that reuses `interpolate` directly.
+- chore: bump `i18next-locize-backend` 9.0.1 → **9.0.2** ([GHSA-mgcp-mfp8-3q45](https://github.com/locize/i18next-locize-backend/security/advisories/GHSA-mgcp-mfp8-3q45))
+- chore: remove unused `coveralls` devDependency
+- chore: ignore `.env*` and `*.pem`/`*.key` files in `.gitignore`
+
 ### 5.0.1
 
 - update i18next-locize-backend dep
