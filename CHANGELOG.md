@@ -1,3 +1,15 @@
+### 6.0.0
+
+- BREAKING: bumped `i18next-locize-backend` to v10 and `locize-lastused` to v5. Both dropped their `cross-fetch` dependency, so locizer no longer ships the `cross-fetch` / `node-fetch` fallback in its bundle. Native `fetch` is now required (Node ≥ 18, modern browsers, Deno, Bun — all of which ship it). For runtimes without native `fetch`, install a ponyfill yourself before loading this module, or stay on v5.
+- BREAKING: minimum Node version is now 18 (`engines.node = ">=18"`), inherited from the upstream bumps.
+- chore: declared `"type": "module"` and `"sideEffects": false`. CJS consumers continue to work via the `dist/cjs/index.js` build (with a `{"type":"commonjs"}` marker dropped into `dist/cjs/`).
+- build: replaced rollup 3 + babel + `cpy-cli` + `rimraf` with [`tsdown`](https://tsdown.dev) (rolldown + oxc). One config produces ESM, CJS, and IIFE bundles. Output layout collapsed: ESM at `dist/esm/index.js`, CJS at `dist/cjs/index.js`, plus root `locizer.js` / `locizer.min.js` for `<script>` use. `package.json#exports` map added (was missing).
+- build: minified browser bundle: 40.7 KB → 32.9 KB (−19%); unminified 80.6 KB → 57.0 KB (−29%).
+- chore: dropped 11 dev dependencies — `@babel/core`, `@babel/plugin-transform-runtime`, `@babel/preset-env`, `@rollup/plugin-babel`, `@rollup/plugin-commonjs`, `@rollup/plugin-node-resolve`, `@rollup/plugin-terser`, `babel-eslint` (unused), `babelify` (unused), `chai` + `mocha` (no test files exist), `cpy-cli`, `rimraf`, `rollup`. Net devDeps: 17 → 4.
+- chore: ESLint config converted from CommonJS (`eslint.config.js` with `require`) to ESM (`eslint.config.mjs` with `import`) since the package is now `"type": "module"`. neostandard rules unchanged.
+- chore: tightened `.npmignore` (`example`, `.vscode`, `package-lock.json`, etc.); added the new `tsdown.config.ts`.
+- chore: added `.github/workflows/node.yml` — first CI workflow for this repo. Runs lint + build on Node 20 / 22 / 24.
+
 ### 5.0.2
 
 Security hardening — no GHSA on its own (the real URL-building now lives in the upstream `i18next-locize-backend@9.0.2` which has its own [GHSA-mgcp-mfp8-3q45](https://github.com/locize/i18next-locize-backend/security/advisories/GHSA-mgcp-mfp8-3q45); the changes here are defence-in-depth and inherited-fix plumbing).
