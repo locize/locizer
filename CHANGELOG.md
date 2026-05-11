@@ -1,3 +1,9 @@
+### 6.1.0
+
+- feat: ship official TypeScript declarations. `index.d.ts` (CJS) and `index.d.mts` (ESM re-export) cover the full public surface — `init`, `getLanguage`, `getLanguages`, `load`, `loadAll`, `add`, `update`, `used`, the instance properties (`lng`, `referenceLng`, `options`, `publishedLngs`), and types for the language map, message tree, and every callback signature. Consumers no longer need an ambient `declare module 'locizer'` shim.
+- build: `npm run build` now runs a `finalize` step that copies the root declarations into `dist/esm/index.d.{mts,ts}` and `dist/cjs/index.d.ts`, matching the pattern used by `i18next-locize-backend`. `package.json#exports` declares them under each subpath (`.`, `./cjs`, `./esm`), and a top-level `"types": "./index.d.mts"` keeps legacy tooling happy.
+- chore: added a `tsd`-backed type test at `test/typescript/basic.test-d.ts` and a `test:typescript` script (`tsc --noEmit && tsd`); `npm test` now runs `lint` + `build` + this type check. Adds `tsd` and `typescript` to devDependencies.
+
 ### 6.0.0
 
 - BREAKING: bumped `i18next-locize-backend` to v10 and `locize-lastused` to v5. Both dropped their `cross-fetch` dependency, so locizer no longer ships the `cross-fetch` / `node-fetch` fallback in its bundle. Native `fetch` is now required (Node ≥ 18, modern browsers, Deno, Bun — all of which ship it). For runtimes without native `fetch`, install a ponyfill yourself before loading this module, or stay on v5.

@@ -10,15 +10,27 @@
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "browser": "./locizer.min.js",
+  "types": "./index.d.mts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
+      "types": {
+        "require": "./dist/cjs/index.d.ts",
+        "import": "./dist/esm/index.d.mts"
+      },
+      "module": "./dist/esm/index.js",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js",
       "default": "./dist/esm/index.js"
     },
-    "./cjs": "./dist/cjs/index.js",
-    "./esm": "./dist/esm/index.js"
+    "./cjs": {
+      "types": "./dist/cjs/index.d.ts",
+      "default": "./dist/cjs/index.js"
+    },
+    "./esm": {
+      "types": "./dist/esm/index.d.mts",
+      "default": "./dist/esm/index.js"
+    }
   },
   "keywords": [
     "locize",
@@ -41,14 +53,21 @@
     "eslint": "9.39.2",
     "eslint-plugin-import": "2.32.0",
     "neostandard": "0.13.0",
-    "tsdown": "0.21.10"
+    "tsd": "0.33.0",
+    "tsdown": "0.21.10",
+    "typescript": "5.7.2"
   },
   "scripts": {
     "lint": "eslint .",
-    "build": "tsdown && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
-    "test": "npm run lint && npm run build",
+    "build": "tsdown && npm run finalize",
+    "finalize": "cp index.d.mts dist/esm/index.d.mts && cp index.d.ts dist/esm/index.d.ts && cp index.d.ts dist/cjs/index.d.ts && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
+    "test:typescript": "tsc --noEmit && tsd",
+    "test": "npm run lint && npm run build && npm run test:typescript",
     "preversion": "npm run test && git push",
     "postversion": "git push && git push --tags"
+  },
+  "tsd": {
+    "directory": "test/typescript"
   },
   "author": "Jan Mühlemann <jan.muehlemann@gmail.com> (https://github.com/jamuhl)",
   "license": "MIT"
