@@ -33,6 +33,22 @@ locizer 6 · Vite 8.
   `setMissingHandler` and forwards new keys to `locizer.add(...)`
   — analogous to i18next's `saveMissing` option.
 
+### Locize CDN endpoint
+
+Locize ships two CDN infrastructures (full comparison at
+[CDN types: Standard vs. Pro](https://www.locize.com/docs/integration/cdn-types-standard-vs-pro?from=locizer-vue-i18n-example)):
+
+- **Standard CDN** at `api.lite.locize.app` — BunnyCDN-backed, free for
+  generous monthly volumes, 1-hour fixed cache, public-only. Default
+  for newly created Locize projects.
+- **Pro CDN** at `api.locize.app` — CloudFront-backed, paid, supports
+  private downloads, custom caching, namespace backups.
+
+The shipped demo project lives on the Pro CDN, which is why
+`src/i18n.js` sets `cdnType: 'pro'` in `locizer.init(...)`. If you swap
+in your own Locize project, flip `cdnType` to match (`'standard'` for
+`api.lite.locize.app`, `'pro'` for `api.locize.app`).
+
 ### `<Suspense>` for async i18n boot
 
 `src/Suspenser.vue` wraps `App.vue` in `<Suspense>`. `App.vue`'s
