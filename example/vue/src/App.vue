@@ -1,27 +1,21 @@
+<script setup>
+import { useI18n } from 'vue-i18n'
+import TranslationShowCase from './components/TranslationShowCase.vue'
+import { loadMessagesPromise, handleMissing } from './i18n.js'
+
+// Register the missing-translation handler so newly-referenced keys can
+// be pushed back to Locize (when apiKey is set in i18n.js).
+useI18n().setMissingHandler(handleMissing)
+
+// Wait for translations to load before rendering. Pairs with the
+// <Suspense> in Suspenser.vue.
+await loadMessagesPromise
+</script>
+
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
+  <img alt="Vue logo" src="./assets/logo.png" />
   <TranslationShowCase />
 </template>
-
-<script>
-import { loadMessagesPromise, handleMissing } from './i18n'
-import TranslationShowCase from './components/TranslationShowCase.vue'
-import { useI18n } from 'vue-i18n'
-
-export default {
-  name: 'App',
-  components: {
-    TranslationShowCase
-  },
-  // used in combination with Suspense.
-  // useful when translations are not in-memory...
-  async setup() {
-    useI18n().setMissingHandler(handleMissing);
-    await loadMessagesPromise;
-    return {};
-  }
-}
-</script>
 
 <style>
 #app {

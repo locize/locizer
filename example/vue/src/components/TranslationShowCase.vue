@@ -1,62 +1,37 @@
+<script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t, locale } = useI18n()
+</script>
+
 <template>
   <div class="hello">
-    <h1>{{ $t("welcome") }}</h1>
+    <h1>{{ t('welcome') }}</h1>
     <p>
       <i18n-t keypath="descr" tag="label" for="doc">
-        <a href="https://cli.vuejs.org" target="_blank">{{ $t('doc') }}</a>
+        <a href="https://vuejs.org/" target="_blank">{{ t('doc') }}</a>
       </i18n-t>
     </p>
     <div>
-      <div>
-        <span v-t="{path:'end'}" /> <i v-t="'end'" />
-      </div>
+      <span>{{ t('end') }}</span> <i>{{ t('end') }}</i>
     </div>
     <hr />
     <div>
-      <div>
-        <a v-if="$i18n.locale !== 'de'" v-on:click="changeLanguage('de')">
-          DE
-        </a>
-        <strong v-if="$i18n.locale === 'de'">
-          DE
-        </strong>
-        &nbsp;|&nbsp;
-        <a v-if="$i18n.locale !== 'en'" v-on:click="changeLanguage('en')">
-          EN
-        </a>
-        <strong v-if="$i18n.locale === 'en'">
-          EN
-        </strong>
-      </div>
+      <a v-if="locale !== 'de'" @click="locale = 'de'">DE</a>
+      <strong v-if="locale === 'de'">DE</strong>
+      &nbsp;|&nbsp;
+      <a v-if="locale !== 'en'" @click="locale = 'en'">EN</a>
+      <strong v-if="locale === 'en'">EN</strong>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'TranslationShowCase',
-  methods: {
-    changeLanguage(lang) {
-      this.$i18n.locale = lang;
-    }
-  }
-}
-</script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 h3 {
   margin: 40px 0 0;
 }
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
 a {
   color: #42b983;
+  cursor: pointer;
 }
 </style>

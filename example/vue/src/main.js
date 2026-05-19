@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
-import { i18n } from './i18n'
-import App from './Suspenser.vue'
+import { i18n } from './i18n.js'
+import Suspenser from './Suspenser.vue'
 
-createApp(App).use(i18n).mount('#app')
+createApp(Suspenser).use(i18n).mount('#app')

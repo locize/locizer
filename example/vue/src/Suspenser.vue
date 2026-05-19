@@ -1,24 +1,17 @@
+<script setup>
+import App from './App.vue'
+</script>
+
 <template>
   <Suspense>
     <template #default>
       <App />
     </template>
     <template #fallback>
-      <span>Loading...</span>
+      <div>
+        <img alt="Vue logo" src="./assets/logo.png" />
+        <h1>Loading…</h1>
+      </div>
     </template>
   </Suspense>
 </template>
-
-<script>
-import App from './App.vue'
-
-export default {
-  name: 'Suspenser',
-  components: {
-    App
-  }
-}
-</script>
-
-<style>
-</style>
