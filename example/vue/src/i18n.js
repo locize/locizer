@@ -11,7 +11,15 @@ const apiKey = undefined // 'my-api-key'
 locizer.init({
   projectId: '1fb2c780-f038-4ffe-b988-5d9fe2e3ba2d',
   apiKey,
-  cdnType: 'pro'
+  // CDN endpoint your Locize project lives on:
+  //   'standard' → https://api.lite.locize.app — BunnyCDN, free for
+  //                generous monthly volumes, 1-hour cache, public-only.
+  //                Default for newly created Locize projects.
+  //   'pro'      → https://api.locize.app — CloudFront, paid, supports
+  //                private downloads, custom caching, namespace backups.
+  // The shipped demo project is on the Pro CDN.
+  // See https://www.locize.com/docs/integration/cdn-types-standard-vs-pro
+  cdnType: 'pro',
 })
 
 export const i18n = createI18n({
