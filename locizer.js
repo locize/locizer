@@ -31,6 +31,20 @@ var locizer = (function() {
 		if (typeof v !== "string") return v;
 		return v.replace(/[\r\n\x00-\x1F\x7F]/g, " ");
 	}
+	function redactUrlCredentials(u) {
+		if (typeof u !== "string" || u.length === 0) return u;
+		try {
+			const parsed = new URL(u);
+			if (parsed.username || parsed.password) {
+				parsed.username = "";
+				parsed.password = "";
+				return parsed.toString();
+			}
+			return u;
+		} catch (e) {
+			return u.replace(/(\/\/)[^/@\s]+@/g, "$1");
+		}
+	}
 	function debounce$1(func, wait, immediate) {
 		let timeout;
 		return function() {
@@ -54,21 +68,26 @@ var locizer = (function() {
 		while (stack.length > 1) {
 			if (!object) return {};
 			const key = cleanKey(stack.shift());
+			if (UNSAFE_KEYS$1.indexOf(key) > -1) return {};
 			if (!object[key] && Empty) object[key] = new Empty();
 			object = object[key];
 		}
 		if (!object) return {};
+		const k = cleanKey(stack.shift());
+		if (UNSAFE_KEYS$1.indexOf(k) > -1) return {};
 		return {
 			obj: object,
-			k: cleanKey(stack.shift())
+			k
 		};
 	}
 	function setPath(object, path, newValue) {
 		const { obj, k } = getLastOfPath(object, path, Object);
+		if (obj === void 0) return;
 		obj[k] = newValue;
 	}
 	function pushPath(object, path, newValue, concat) {
 		const { obj, k } = getLastOfPath(object, path, Object);
+		if (obj === void 0) return;
 		obj[k] = obj[k] || [];
 		if (concat) obj[k] = obj[k].concat(newValue);
 		if (!concat) obj[k].push(newValue);
@@ -626,11 +645,12 @@ var locizer = (function() {
 				payload = void 0;
 			}
 			callback = callback || (() => {});
+			const safeUrl = sanitizeLogValue(redactUrlCredentials(url));
 			const clb = (err, res) => {
 				const resourceNotExisting = res && res.resourceNotExisting;
-				if (res && (res.status === 408 || res.status === 400)) return callback("failed loading " + url, true, { resourceNotExisting });
-				if (res && (res.status >= 500 && res.status < 600 || !res.status)) return callback("failed loading " + url, true, { resourceNotExisting });
-				if (res && res.status >= 400 && res.status < 500) return callback("failed loading " + url, false, { resourceNotExisting });
+				if (res && (res.status === 408 || res.status === 400)) return callback("failed loading " + safeUrl, true, { resourceNotExisting });
+				if (res && (res.status >= 500 && res.status < 600 || !res.status)) return callback("failed loading " + safeUrl, true, { resourceNotExisting });
+				if (res && res.status >= 400 && res.status < 500) return callback("failed loading " + safeUrl, false, { resourceNotExisting });
 				if (!res && err && err.message) {
 					const errorMessage = err.message.toLowerCase();
 					if ([
@@ -638,7 +658,7 @@ var locizer = (function() {
 						"fetch",
 						"network",
 						"load"
-					].find((term) => errorMessage.indexOf(term) > -1)) return callback("failed loading " + url + ": " + err.message, true, { resourceNotExisting });
+					].find((term) => errorMessage.indexOf(term) > -1)) return callback("failed loading " + safeUrl + ": " + sanitizeLogValue(err.message), true, { resourceNotExisting });
 				}
 				if (err) return callback(err, false);
 				let ret, parseErr;
@@ -646,10 +666,10 @@ var locizer = (function() {
 					if (typeof res.data === "string") ret = JSON.parse(res.data);
 					else ret = res.data;
 				} catch (e) {
-					parseErr = "failed parsing " + url + " to json";
+					parseErr = "failed parsing " + safeUrl + " to json";
 				}
 				if (parseErr) return callback(parseErr, false);
-				if (this.options.failLoadingOnEmptyJSON && !Object.keys(ret).length) return callback("loaded result empty for " + url, false, { resourceNotExisting });
+				if (this.options.failLoadingOnEmptyJSON && !Object.keys(ret).length) return callback("loaded result empty for " + safeUrl, false, { resourceNotExisting });
 				callback(null, ret, { resourceNotExisting });
 			};
 			if (!this.options.request || url.indexOf(`/languages/${options.projectId}`) > 0) return request$1(options, url, payload, clb);

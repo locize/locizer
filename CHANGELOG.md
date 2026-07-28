@@ -1,3 +1,7 @@
+### 6.1.1
+
+- update i18next deps
+
 ### 6.1.0
 
 - feat: ship official TypeScript declarations. `index.d.ts` (CJS) and `index.d.mts` (ESM re-export) cover the full public surface — `init`, `getLanguage`, `getLanguages`, `load`, `loadAll`, `add`, `update`, `used`, the instance properties (`lng`, `referenceLng`, `options`, `publishedLngs`), and types for the language map, message tree, and every callback signature. Consumers no longer need an ambient `declare module 'locizer'` shim.
