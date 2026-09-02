@@ -102,35 +102,23 @@ var locizer = (function() {
 		if (object == null) return "";
 		return "" + object;
 	}
+	const NO_COLON_KEYS = ["lng", "ns"];
 	function interpolateUrl(str, data) {
-		let match;
 		let unsafe = false;
-		while (match = regexp$1.exec(str)) {
-			const key = match[1].trim();
-			if (UNSAFE_KEYS$1.indexOf(key) > -1) {
-				regexp$1.lastIndex = 0;
-				continue;
-			}
-			const raw = data[key];
-			if (raw == null) {
-				regexp$1.lastIndex = 0;
-				continue;
-			}
+		const out = str.replace(regexp$1, (match, key) => {
+			const k = key.trim();
+			if (UNSAFE_KEYS$1.indexOf(k) > -1) return match;
+			const raw = data[k];
+			if (raw == null) return match;
 			const segments = makeString$1(raw).split("+");
-			let segmentsOk = true;
-			for (const seg of segments) if (!isSafeUrlSegment(seg)) {
-				segmentsOk = false;
-				break;
-			}
-			if (!segmentsOk) {
+			const noColon = NO_COLON_KEYS.indexOf(k) > -1;
+			for (const seg of segments) if (!isSafeUrlSegment(seg) || noColon && seg.indexOf(":") > -1) {
 				unsafe = true;
-				break;
+				return match;
 			}
-			str = str.replace(match[0], segments.join("+"));
-			regexp$1.lastIndex = 0;
-		}
-		regexp$1.lastIndex = 0;
-		return unsafe ? null : str;
+			return segments.join("+");
+		});
+		return unsafe ? null : out;
 	}
 	function isMissingOption$1(obj, props) {
 		return props.reduce((mem, p) => {

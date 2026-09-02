@@ -1,3 +1,7 @@
+### 6.1.2
+
+- update i18next-locize-backend dep
+
 ### 6.1.1
 
 - update i18next deps
