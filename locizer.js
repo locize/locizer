@@ -102,7 +102,8 @@ var locizer = (function() {
 		if (object == null) return "";
 		return "" + object;
 	}
-	const NO_COLON_KEYS = ["lng", "ns"];
+	const LNG_NS_KEYS = ["lng", "ns"];
+	const LNG_NS_UNSAFE = /[:&=;]/;
 	function interpolateUrl(str, data) {
 		let unsafe = false;
 		const out = str.replace(regexp$1, (match, key) => {
@@ -111,8 +112,8 @@ var locizer = (function() {
 			const raw = data[k];
 			if (raw == null) return match;
 			const segments = makeString$1(raw).split("+");
-			const noColon = NO_COLON_KEYS.indexOf(k) > -1;
-			for (const seg of segments) if (!isSafeUrlSegment(seg) || noColon && seg.indexOf(":") > -1) {
+			const isLngOrNs = LNG_NS_KEYS.indexOf(k) > -1;
+			for (const seg of segments) if (!isSafeUrlSegment(seg) || isLngOrNs && LNG_NS_UNSAFE.test(seg)) {
 				unsafe = true;
 				return match;
 			}
