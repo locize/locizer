@@ -9,7 +9,8 @@ const apiKey = '3403d121-46be-40e8-b21d-e3066519232c'; // do not expose your API
 
 locizer.init({
   projectId: '72384226-6235-4472-a97f-b179a1f39dcc',
-  apiKey
+  apiKey,
+  cdnType: 'pro' // this demo project is on the Pro CDN (locizer defaults to 'standard')
 });
 
 lngs.forEach((l) => {
