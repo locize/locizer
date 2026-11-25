@@ -1,3 +1,7 @@
+### 6.1.4
+
+- update i18next-browser-languagedetector dep (8.3.1: a language with an `@`, like `sr@latin`, is detected again from the cookie, query string and hash)
+
 ### 6.1.3
 
 - update i18next-locize-backend dep

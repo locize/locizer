@@ -829,27 +829,23 @@ var locizer = (function() {
 		});
 		return obj;
 	}
-	function hasXSS(input) {
-		if (typeof input !== "string") return false;
-		return [
-			/<\s*script.*?>/i,
-			/<\s*\/\s*script\s*>/i,
-			/<\s*img.*?on\w+\s*=/i,
-			/<\s*\w+\s*on\w+\s*=.*?>/i,
-			/javascript\s*:/i,
-			/vbscript\s*:/i,
-			/expression\s*\(/i,
-			/eval\s*\(/i,
-			/alert\s*\(/i,
-			/document\.cookie/i,
-			/document\.write\s*\(/i,
-			/window\.location/i,
-			/innerHTML/i
-		].some((pattern) => pattern.test(input));
+	function decode(value) {
+		try {
+			return decodeURIComponent(value);
+		} catch (e) {
+			return value;
+		}
+	}
+	function isSafeLanguageCode(code) {
+		return typeof code === "string" && /^[A-Za-z0-9_@.-]{1,128}$/.test(code) && code.indexOf("..") < 0 && [
+			"__proto__",
+			"constructor",
+			"prototype"
+		].indexOf(code) < 0;
 	}
 	const fieldContentRegExp = /^[\u0009\u0020-\u007e\u0080-\u00ff]+$/;
-	const serializeCookie = function(name, val) {
-		const opt = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : { path: "/" };
+	const serializeCookie = (name, val, options = { path: "/" }) => {
+		const opt = options;
 		let str = `${name}=${encodeURIComponent(val)}`;
 		if (opt.maxAge > 0) {
 			const maxAge = opt.maxAge - 0;
@@ -889,11 +885,10 @@ var locizer = (function() {
 		return str;
 	};
 	const cookie = {
-		create(name, value, minutes, domain) {
-			let cookieOptions = arguments.length > 4 && arguments[4] !== void 0 ? arguments[4] : {
-				path: "/",
-				sameSite: "strict"
-			};
+		create(name, value, minutes, domain, cookieOptions = {
+			path: "/",
+			sameSite: "strict"
+		}) {
 			if (minutes) {
 				cookieOptions.expires = /* @__PURE__ */ new Date();
 				cookieOptions.expires.setTime(cookieOptions.expires.getTime() + minutes * 60 * 1e3);
@@ -907,7 +902,7 @@ var locizer = (function() {
 			for (let i = 0; i < ca.length; i++) {
 				let c = ca[i];
 				while (c.charAt(0) === " ") c = c.substring(1, c.length);
-				if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+				if (c.indexOf(nameEQ) === 0) return decode(c.substring(nameEQ.length, c.length));
 			}
 			return null;
 		},
@@ -917,19 +912,16 @@ var locizer = (function() {
 	};
 	var cookie$1 = {
 		name: "cookie",
-		lookup(_ref) {
-			let { lookupCookie } = _ref;
+		lookup({ lookupCookie }) {
 			if (lookupCookie && typeof document !== "undefined") return cookie.read(lookupCookie) || void 0;
 		},
-		cacheUserLanguage(lng, _ref2) {
-			let { lookupCookie, cookieMinutes, cookieDomain, cookieOptions } = _ref2;
+		cacheUserLanguage(lng, { lookupCookie, cookieMinutes, cookieDomain, cookieOptions }) {
 			if (lookupCookie && typeof document !== "undefined") cookie.create(lookupCookie, lng, cookieMinutes, cookieDomain, cookieOptions);
 		}
 	};
 	var querystring = {
 		name: "querystring",
-		lookup(_ref) {
-			let { lookupQuerystring } = _ref;
+		lookup({ lookupQuerystring }) {
 			let found;
 			if (typeof window !== "undefined") {
 				let { search } = window.location;
@@ -938,7 +930,7 @@ var locizer = (function() {
 				for (let i = 0; i < params.length; i++) {
 					const pos = params[i].indexOf("=");
 					if (pos > 0) {
-						if (params[i].substring(0, pos) === lookupQuerystring) found = params[i].substring(pos + 1);
+						if (params[i].substring(0, pos) === lookupQuerystring) found = decode(params[i].substring(pos + 1));
 					}
 				}
 			}
@@ -947,8 +939,7 @@ var locizer = (function() {
 	};
 	var hash = {
 		name: "hash",
-		lookup(_ref) {
-			let { lookupHash, lookupFromHashIndex } = _ref;
+		lookup({ lookupHash, lookupFromHashIndex }) {
 			let found;
 			if (typeof window !== "undefined") {
 				const { hash } = window.location;
@@ -959,13 +950,13 @@ var locizer = (function() {
 						for (let i = 0; i < params.length; i++) {
 							const pos = params[i].indexOf("=");
 							if (pos > 0) {
-								if (params[i].substring(0, pos) === lookupHash) found = params[i].substring(pos + 1);
+								if (params[i].substring(0, pos) === lookupHash) found = decode(params[i].substring(pos + 1));
 							}
 						}
 					}
 					if (found) return found;
 					if (!found && lookupFromHashIndex > -1) {
-						const language = hash.match(/\/([a-zA-Z-]*)/g);
+						const language = hash.match(/\/([a-zA-Z][a-zA-Z0-9-]*)?/g);
 						if (!Array.isArray(language)) return void 0;
 						return language[typeof lookupFromHashIndex === "number" ? lookupFromHashIndex : 0]?.replace("/", "");
 					}
@@ -990,12 +981,10 @@ var locizer = (function() {
 	};
 	var localStorage = {
 		name: "localStorage",
-		lookup(_ref) {
-			let { lookupLocalStorage } = _ref;
+		lookup({ lookupLocalStorage }) {
 			if (lookupLocalStorage && localStorageAvailable()) return window.localStorage.getItem(lookupLocalStorage) || void 0;
 		},
-		cacheUserLanguage(lng, _ref2) {
-			let { lookupLocalStorage } = _ref2;
+		cacheUserLanguage(lng, { lookupLocalStorage }) {
 			if (lookupLocalStorage && localStorageAvailable()) window.localStorage.setItem(lookupLocalStorage, lng);
 		}
 	};
@@ -1015,12 +1004,10 @@ var locizer = (function() {
 	};
 	var sessionStorage = {
 		name: "sessionStorage",
-		lookup(_ref) {
-			let { lookupSessionStorage } = _ref;
+		lookup({ lookupSessionStorage }) {
 			if (lookupSessionStorage && sessionStorageAvailable()) return window.sessionStorage.getItem(lookupSessionStorage) || void 0;
 		},
-		cacheUserLanguage(lng, _ref2) {
-			let { lookupSessionStorage } = _ref2;
+		cacheUserLanguage(lng, { lookupSessionStorage }) {
 			if (lookupSessionStorage && sessionStorageAvailable()) window.sessionStorage.setItem(lookupSessionStorage, lng);
 		}
 	};
@@ -1039,8 +1026,7 @@ var locizer = (function() {
 	};
 	var htmlTag = {
 		name: "htmlTag",
-		lookup(_ref) {
-			let { htmlTag } = _ref;
+		lookup({ htmlTag }) {
 			let found;
 			const internalHtmlTag = htmlTag || (typeof document !== "undefined" ? document.documentElement : null);
 			if (internalHtmlTag && typeof internalHtmlTag.getAttribute === "function") found = internalHtmlTag.getAttribute("lang");
@@ -1049,22 +1035,21 @@ var locizer = (function() {
 	};
 	var path = {
 		name: "path",
-		lookup(_ref) {
-			let { lookupFromPathIndex } = _ref;
+		lookup({ lookupFromPathIndex }) {
 			if (typeof window === "undefined") return void 0;
-			const language = window.location.pathname.match(/\/([a-zA-Z-]*)/g);
+			const language = window.location.pathname.match(/\/([a-zA-Z][a-zA-Z0-9-]*)?/g);
 			if (!Array.isArray(language)) return void 0;
 			return language[typeof lookupFromPathIndex === "number" ? lookupFromPathIndex : 0]?.replace("/", "");
 		}
 	};
 	var subdomain = {
 		name: "subdomain",
-		lookup(_ref) {
-			let { lookupFromSubdomainIndex } = _ref;
-			const internalLookupFromSubdomainIndex = typeof lookupFromSubdomainIndex === "number" ? lookupFromSubdomainIndex + 1 : 1;
-			const language = typeof window !== "undefined" && window.location?.hostname?.match(/^(\w{2,5})\.(([a-z0-9-]{1,63}\.[a-z]{2,6})|localhost)/i);
+		lookup({ lookupFromSubdomainIndex }) {
+			const index = typeof lookupFromSubdomainIndex === "number" ? lookupFromSubdomainIndex : 0;
+			const hostname = typeof window !== "undefined" && window.location?.hostname?.split(".").slice(index).join(".");
+			const language = hostname && hostname.match(/^(\w{2,5}(?:-(?:[a-z]{4}|[a-z]{2}|\d{3}))*)\.(([a-z0-9-]{1,63}\.[a-z]{2,6})|localhost)/i);
 			if (!language) return void 0;
-			return language[internalLookupFromSubdomainIndex];
+			return language[1];
 		}
 	};
 	let canCookies = false;
@@ -1092,16 +1077,12 @@ var locizer = (function() {
 		convertDetectedLanguage: (l) => l
 	});
 	var Browser = class {
-		constructor(services) {
-			let options = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
+		constructor(services, options = {}) {
 			this.type = "languageDetector";
 			this.detectors = {};
 			this.init(services, options);
 		}
-		init() {
-			let services = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : { languageUtils: {} };
-			let options = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
-			let i18nOptions = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : {};
+		init(services = { languageUtils: {} }, options = {}, i18nOptions = {}) {
 			this.services = services;
 			this.options = defaults$1(options, this.options || {}, getDefaults$1());
 			if (typeof this.options.convertDetectedLanguage === "string" && this.options.convertDetectedLanguage.indexOf("15897") > -1) this.options.convertDetectedLanguage = (l) => l.replace("-", "_");
@@ -1121,8 +1102,7 @@ var locizer = (function() {
 			this.detectors[detector.name] = detector;
 			return this;
 		}
-		detect() {
-			let detectionOrder = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : this.options.order;
+		detect(detectionOrder = this.options.order) {
 			let detected = [];
 			detectionOrder.forEach((detectorName) => {
 				if (this.detectors[detectorName]) {
@@ -1131,12 +1111,11 @@ var locizer = (function() {
 					if (lookup) detected = detected.concat(lookup);
 				}
 			});
-			detected = detected.filter((d) => d !== void 0 && d !== null && !hasXSS(d)).map((d) => this.options.convertDetectedLanguage(d));
+			detected = detected.filter((d) => isSafeLanguageCode(d)).map((d) => this.options.convertDetectedLanguage(d));
 			if (this.services && this.services.languageUtils && this.services.languageUtils.getBestMatchFromCodes) return detected;
 			return detected.length > 0 ? detected[0] : null;
 		}
-		cacheUserLanguage(lng) {
-			let caches = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : this.options.caches;
+		cacheUserLanguage(lng, caches = this.options.caches) {
 			if (!caches) return;
 			if (this.options.excludeCacheFor && this.options.excludeCacheFor.indexOf(lng) > -1) return;
 			caches.forEach((cacheName) => {
