@@ -45,7 +45,7 @@ var locizer = (function() {
 			return u.replace(/(\/\/)[^/@\s]+@/g, "$1");
 		}
 	}
-	function debounce$1(func, wait, immediate) {
+	function debounce(func, wait, immediate) {
 		let timeout;
 		return function() {
 			const context = this;
@@ -155,14 +155,20 @@ var locizer = (function() {
 		const matches = headerString.match(/max-age=([0-9]+)/);
 		return matches ? parseInt(matches[1], 10) : 0;
 	};
-	const requestWithFetch$1 = (options, url, payload, callback) => {
+	const requestWithFetch$1 = (options, url, payload, cb) => {
+		let completed = false;
+		const callback = (err, res) => {
+			if (completed) throw err;
+			completed = true;
+			cb(err, res);
+		};
 		const headers = {};
 		if (typeof window === "undefined" && typeof global !== "undefined" && typeof global.process !== "undefined" && global.process.versions && global.process.versions.node) headers["User-Agent"] = `i18next-locize-backend (node/${global.process.version}; ${global.process.platform} ${global.process.arch})`;
 		if (options.authorize && options.apiKey) headers.Authorization = options.apiKey;
 		if (payload || options.setContentTypeJSON) headers["Content-Type"] = "application/json";
 		const resolver = (response) => {
 			let resourceNotExisting = response.headers && response.headers.get("x-cache") === "Error from cloudfront";
-			if (options.cdnType === "standard" && response.status === 404 && (!response.headers || !response.headers.get("x-cache"))) {
+			if (options.cdnType === "standard" && !payload && response.status === 404 && (!response.headers || !response.headers.get("x-cache"))) {
 				resourceNotExisting = true;
 				return callback(null, {
 					status: 200,
@@ -172,7 +178,8 @@ var locizer = (function() {
 			}
 			if (!response.ok) return callback(response.statusText || "Error", {
 				status: response.status,
-				resourceNotExisting
+				resourceNotExisting,
+				retryAfter: response.headers && response.headers.get("retry-after")
 			});
 			const cacheControl = response.headers && response.headers.get("cache-control");
 			response.text().then((data) => {
@@ -195,7 +202,13 @@ var locizer = (function() {
 			headers
 		}).then(resolver).catch(callback);
 	};
-	const requestWithXmlHttpRequest$1 = (options, url, payload, callback) => {
+	const requestWithXmlHttpRequest$1 = (options, url, payload, cb) => {
+		let completed = false;
+		const callback = (err, res) => {
+			if (completed) return;
+			completed = true;
+			cb(err, res);
+		};
 		try {
 			const x = XmlHttpRequestApi$1 ? new XmlHttpRequestApi$1() : new ActiveXObjectApi$1("MSXML2.XMLHTTP.3.0");
 			x.open(payload ? "POST" : "GET", url, 1);
@@ -204,7 +217,7 @@ var locizer = (function() {
 			if (payload || options.setContentTypeJSON) x.setRequestHeader("Content-Type", "application/json");
 			x.onreadystatechange = () => {
 				let resourceNotExisting = x.getResponseHeader("x-cache") === "Error from cloudfront";
-				if (options.cdnType === "standard" && x.status === 404 && !x.getResponseHeader("x-cache")) {
+				if (options.cdnType === "standard" && !payload && x.status === 404 && !x.getResponseHeader("x-cache")) {
 					resourceNotExisting = true;
 					return x.readyState > 3 && callback(null, {
 						status: 200,
@@ -217,12 +230,13 @@ var locizer = (function() {
 					status: x.status,
 					data: x.responseText,
 					resourceNotExisting,
-					cacheControl
+					cacheControl,
+					retryAfter: x.getResponseHeader("Retry-After")
 				});
 			};
 			x.send(JSON.stringify(payload));
 		} catch (e) {
-			console && console.log(e);
+			callback(e);
 		}
 	};
 	const request$1 = (options, url, payload, callback) => {
@@ -346,13 +360,14 @@ var locizer = (function() {
 	};
 	const handleCustomRequest = (opt, info, cb) => {
 		if (opt.request.length === 1) {
+			let r;
 			try {
-				const r = opt.request(info);
-				if (r && typeof r.then === "function") r.then((data) => cb(null, data)).catch(cb);
-				else cb(null, r);
+				r = opt.request(info);
 			} catch (err) {
-				cb(err);
+				return cb(err);
 			}
+			if (r && typeof r.then === "function") r.then((data) => cb(null, data), cb);
+			else cb(null, r);
 			return;
 		}
 		opt.request(info, cb);
@@ -362,6 +377,19 @@ var locizer = (function() {
 		const min = Math.max(0, base - variance);
 		const max = base + variance;
 		return Math.floor(min + Math.random() * (max - min));
+	}
+	function startReloadTimer(ref, ms) {
+		const interval = setInterval(() => {
+			const backend = ref.deref();
+			if (backend) backend.reload();
+			else clearInterval(interval);
+		}, ms);
+		if (typeof interval === "object" && typeof interval.unref === "function") interval.unref();
+		return interval;
+	}
+	function warnAndCallBack(backend, callback, message) {
+		(backend.services && backend.services.logger || console).warn(message);
+		if (typeof callback === "function") callback(new Error(message));
 	}
 	var I18NextLocizeBackend = class {
 		constructor(services, options = {}, allOptions = {}, callback) {
@@ -407,15 +435,13 @@ var locizer = (function() {
 				callback(null, opts, languages);
 			});
 			this.queuedWrites = { pending: {} };
-			this.debouncedProcess = debounce$1(this.process, this.options.writeDebounce);
+			this.debouncedProcess = debounce(this.process, this.options.writeDebounce);
 			if (this.interval) clearInterval(this.interval);
-			if (this.options.reloadInterval && this.options.projectId) {
-				this.interval = setInterval(() => this.reload(), this.options.reloadInterval);
-				if (typeof this.interval === "object" && typeof this.interval.unref === "function") this.interval.unref();
-			}
+			if (this.options.reloadInterval && this.options.projectId) this.interval = startReloadTimer(typeof WeakRef === "function" ? new WeakRef(this) : { deref: () => this }, this.options.reloadInterval);
 		}
 		reload() {
-			const { backendConnector, languageUtils, logger } = this.services || { logger: console };
+			const { backendConnector, languageUtils, logger, utils } = this.services || { logger: console };
+			if (utils && utils.reloadResources) return utils.reloadResources();
 			if (!backendConnector) return;
 			const currentLanguage = backendConnector.language;
 			if (currentLanguage && currentLanguage.toLowerCase() === "cimode") return;
@@ -717,10 +743,7 @@ var locizer = (function() {
 				projectId: this.options.projectId,
 				version: this.options.version
 			});
-			if (missingUrl == null || updatesUrl == null) {
-				if (typeof callback === "function") callback(/* @__PURE__ */ new Error("i18next-locize-backend: unsafe lng/ns/projectId/version — refusing to persist missing keys for lng=" + sanitizeLogValue(String(lng)) + " ns=" + sanitizeLogValue(String(namespace))));
-				return;
-			}
+			if (missingUrl == null || updatesUrl == null) return warnAndCallBack(this, callback, "i18next-locize-backend: unsafe lng/ns/projectId/version — refusing to persist missing keys for lng=" + sanitizeLogValue(String(lng)) + " ns=" + sanitizeLogValue(String(namespace)));
 			let hasMissing = false;
 			let hasUpdates = false;
 			const payloadMissing = {};
@@ -738,24 +761,34 @@ var locizer = (function() {
 					payloadMissing[item.key] = value;
 				}
 			});
-			let todo = 0;
-			if (hasMissing) todo++;
-			if (hasUpdates) todo++;
-			const doneOne = (err) => {
-				todo--;
-				if (!todo) callback(err);
+			const requests = [];
+			if (hasMissing) requests.push([missingUrl, payloadMissing]);
+			if (hasUpdates) requests.push([updatesUrl, payloadUpdate]);
+			let firstError;
+			const next = (err) => {
+				if (err && !firstError) firstError = err;
+				const [url, payload] = requests.shift() || [];
+				if (!url) return callback(firstError);
+				this.post(url, payload, next);
 			};
-			if (!todo) doneOne();
-			if (hasMissing) if (!this.options.request) request$1(defaults$2({ authorize: true }, this.options), missingUrl, payloadMissing, doneOne);
-			else {
-				const info = getCustomRequestInfo(missingUrl, defaults$2({ authorize: true }, this.options), payloadMissing);
-				handleCustomRequest(this.options, info, doneOne);
-			}
-			if (hasUpdates) if (!this.options.request) request$1(defaults$2({ authorize: true }, this.options), updatesUrl, payloadUpdate, doneOne);
-			else {
-				const info = getCustomRequestInfo(updatesUrl, defaults$2({ authorize: true }, this.options), payloadUpdate);
-				handleCustomRequest(this.options, info, doneOne);
-			}
+			next();
+		}
+		post(url, payload, callback, attempt = 1) {
+			const done = (err, res) => {
+				const status = res && res.status;
+				const noAnswer = !status && (!!err || status === 0);
+				const failed = noAnswer || status >= 400 && status !== 412;
+				if ((noAnswer || status === 429 || status >= 500) && attempt < 3) {
+					const retryAfter = Math.min(parseInt(res && res.retryAfter, 10) || 0, 60);
+					const delay = retryAfter > 0 ? retryAfter * 1e3 : status === 429 ? 6e3 : attempt * 1e3;
+					return setTimeout(() => this.post(url, payload, callback, attempt + 1), delay);
+				}
+				if (!failed) return callback();
+				warnAndCallBack(this, callback, `i18next-locize-backend: saving keys to ${sanitizeLogValue(redactUrlCredentials(url))} failed: ${status || sanitizeLogValue(String(err && err.message || err))}`);
+			};
+			const options = defaults$2({ authorize: true }, this.options);
+			if (!this.options.request) return request$1(options, url, payload, done);
+			handleCustomRequest(this.options, getCustomRequestInfo(url, options, payload), done);
 		}
 		write(lng, namespace) {
 			if (getPath(this.queuedWrites, [
@@ -773,30 +806,24 @@ var locizer = (function() {
 					lng,
 					namespace
 				], true);
-				const namespaceSaved = () => {
+				const namespaceSaved = (err) => {
 					setPath(this.queuedWrites, [
 						"locks",
 						lng,
 						namespace
 					], false);
-					clbs.forEach((clb) => clb());
-					if (this.options.onSaved) this.options.onSaved(lng, namespace);
+					clbs.forEach((clb) => clb(err));
+					if (this.options.onSaved && !err) this.options.onSaved(lng, namespace);
 					this.debouncedProcess(lng, namespace);
 				};
-				const amountOfPages = missings.length / pageSize;
-				let pagesDone = 0;
-				let page = missings.splice(0, pageSize);
-				this.writePage(lng, namespace, page, () => {
-					pagesDone++;
-					if (pagesDone >= amountOfPages) namespaceSaved();
-				});
-				while (page.length === pageSize) {
-					page = missings.splice(0, pageSize);
-					if (page.length) this.writePage(lng, namespace, page, () => {
-						pagesDone++;
-						if (pagesDone >= amountOfPages) namespaceSaved();
-					});
-				}
+				let firstError;
+				const writeNextPage = (err) => {
+					if (err && !firstError) firstError = err;
+					const page = missings.splice(0, pageSize);
+					if (!page.length) return namespaceSaved(firstError);
+					this.writePage(lng, namespace, page, writeNextPage);
+				};
+				writeNextPage();
 			}
 		}
 		process() {
@@ -818,6 +845,7 @@ var locizer = (function() {
 		}
 	};
 	I18NextLocizeBackend.type = "backend";
+	I18NextLocizeBackend.callbackApi = true;
 	//#endregion
 	//#region node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js
 	const { slice: slice$1, forEach } = [];
@@ -1137,21 +1165,6 @@ var locizer = (function() {
 		});
 		return obj;
 	}
-	function debounce(func, wait, immediate) {
-		let timeout;
-		return function() {
-			const context = this;
-			const args = arguments;
-			const later = function() {
-				timeout = null;
-				if (!immediate) func.apply(context, args);
-			};
-			const callNow = immediate && !timeout;
-			clearTimeout(timeout);
-			timeout = setTimeout(later, wait);
-			if (callNow) func.apply(context, args);
-		};
-	}
 	function isMissingOption(obj, props) {
 		return props.reduce((mem, p) => {
 			if (mem) return mem;
@@ -1200,15 +1213,23 @@ var locizer = (function() {
 		if (typeof fetch === "function") fetch(url, {
 			method: payload ? "POST" : "GET",
 			body: payload ? JSON.stringify(payload) : void 0,
-			headers
+			headers,
+			keepalive: !!options.keepalive
 		}).then(resolver).catch(callback);
 		else fetchApi(url, {
 			method: payload ? "POST" : "GET",
 			body: payload ? JSON.stringify(payload) : void 0,
-			headers
+			headers,
+			keepalive: !!options.keepalive
 		}).then(resolver).catch(callback);
 	};
-	const requestWithXmlHttpRequest = (options, url, payload, callback) => {
+	const requestWithXmlHttpRequest = (options, url, payload, cb) => {
+		let completed = false;
+		const callback = (err, res) => {
+			if (completed) return;
+			completed = true;
+			cb(err, res);
+		};
 		try {
 			const x = XmlHttpRequestApi ? new XmlHttpRequestApi() : new ActiveXObjectApi("MSXML2.XMLHTTP.3.0");
 			x.open(payload ? "POST" : "GET", url, 1);
@@ -1225,7 +1246,7 @@ var locizer = (function() {
 			};
 			x.send(JSON.stringify(payload));
 		} catch (e) {
-			console && console.log(e);
+			callback(e);
 		}
 	};
 	const request = (options, url, payload, callback) => {
@@ -1246,6 +1267,7 @@ var locizer = (function() {
 			setContentTypeJSON: false,
 			version: "latest",
 			debounceSubmit: 9e4,
+			resubmitAfter: 435e5,
 			allowedHosts: ["localhost"]
 		};
 	};
@@ -1261,10 +1283,21 @@ var locizer = (function() {
 			const hostname = typeof window !== "undefined" && window.location && window.location.hostname;
 			if (hostname) this.isAllowed = this.options.allowedHosts.indexOf(hostname) > -1;
 			else this.isAllowed = true;
-			this.submitting = null;
-			this.pending = {};
-			this.done = {};
-			this.submit = debounce(this.submit, this.options.debounceSubmit);
+			if (this.callbacks) this.callbacks.splice(0).forEach((callback) => callback(/* @__PURE__ */ new Error("locize-lastused: init() was called again before these keys were sent")));
+			clearTimeout(this.timer);
+			this.timer = null;
+			this.sending = false;
+			this.pending = Object.create(null);
+			this.callbacks = [];
+			this.sentAt = Object.create(null);
+			if (typeof window !== "undefined" && typeof document !== "undefined" && window.addEventListener && !this.listening) {
+				this.listening = true;
+				const flush = () => this.send(true);
+				window.addEventListener("pagehide", flush);
+				document.addEventListener("visibilitychange", () => {
+					if (document.visibilityState === "hidden") flush();
+				});
+			}
 			if (isI18next) this.interceptI18next(options);
 		},
 		interceptI18next(i18next) {
@@ -1275,36 +1308,71 @@ var locizer = (function() {
 			};
 		},
 		used(ns, key, callback) {
-			["pending", "done"].forEach((k) => {
-				if (this.done[ns] && this.done[ns][key]) return;
-				if (!this[k][ns]) this[k][ns] = {};
-				this[k][ns][key] = true;
-			});
-			this.submit(callback);
-		},
-		submit(callback) {
 			if (!this.isAllowed) return callback && callback(/* @__PURE__ */ new Error("not allowed"));
-			if (this.submitting) return this.submit(callback);
+			const now = Date.now();
+			const sentAt = this.sentAt[ns] && this.sentAt[ns][key];
+			if (sentAt && now - sentAt < this.options.resubmitAfter) return callback && callback();
+			if (!this.sentAt[ns]) this.sentAt[ns] = Object.create(null);
+			this.sentAt[ns][key] = now;
+			this.queue(ns, [key], 1);
+			if (callback) this.callbacks.push(callback);
+			this.schedule();
+		},
+		queue(ns, keys, attempt) {
+			if (!this.pending[ns]) this.pending[ns] = Object.create(null);
+			keys.forEach((key) => {
+				this.pending[ns][key] = attempt;
+			});
+		},
+		schedule() {
+			if (this.timer) return;
+			this.timer = setTimeout(() => {
+				this.timer = null;
+				this.send();
+			}, this.options.debounceSubmit);
+		},
+		send(keepalive) {
+			const namespaces = Object.keys(this.pending);
+			if (!namespaces.length) return;
+			if (this.sending && !keepalive) return;
+			const batch = this.pending;
+			const callbacks = this.callbacks;
+			const options = this.options;
+			this.pending = Object.create(null);
+			this.callbacks = [];
+			const finish = (err) => callbacks.forEach((callback) => callback(err));
+			if (!this.isAllowed) return finish(/* @__PURE__ */ new Error("not allowed"));
 			const isMissing = isMissingOption(this.options, [
 				"projectId",
 				"version",
 				"apiKey",
 				"referenceLng"
 			]);
-			if (isMissing) return callback && callback(new Error(isMissing));
-			this.submitting = this.pending;
-			this.pending = {};
-			const namespaces = Object.keys(this.submitting);
+			if (isMissing) return finish(new Error(isMissing));
+			if (!keepalive) this.sending = true;
+			let keepaliveBudget = keepalive ? 61440 : 0;
 			let todo = namespaces.length;
-			const doneOne = (err) => {
-				todo--;
-				if (!todo) {
-					this.submitting = null;
-					if (callback) callback(err);
+			let lastError;
+			const doneOne = (ns, keys) => (err, res) => {
+				const status = res && res.status;
+				const noAnswer = !status && (!!err || status === 0);
+				const current = this.options === options;
+				if (!current) {} else if ((status === 401 || status === 403) && this.isAllowed) {
+					this.isAllowed = false;
+					if (typeof console !== "undefined" && console.warn) console.warn(`locize-lastused: stopped sending last used information on this page, the locize API answered ${status} ${err || ""}. A 401 means the api key has no write access (it needs the role "user" or "admin"); lastused belongs on development or staging, never in production.`);
+				} else if (noAnswer || status === 429 || status >= 500) {
+					const again = keys.filter((key) => batch[ns][key] < 2);
+					if (again.length) this.queue(ns, again, 2);
 				}
+				if (noAnswer || status >= 400) lastError = err || /* @__PURE__ */ new Error(`locize-lastused: the locize API answered ${status}`);
+				todo--;
+				if (todo) return;
+				if (current && !keepalive) this.sending = false;
+				if (current && Object.keys(this.pending).length) this.schedule();
+				setTimeout(() => finish(lastError));
 			};
 			namespaces.forEach((ns) => {
-				const keys = Object.keys(this.submitting[ns]);
+				const keys = Object.keys(batch[ns]);
 				const url = replaceIn(this.options.lastUsedPath, [
 					"projectId",
 					"version",
@@ -1314,8 +1382,13 @@ var locizer = (function() {
 					lng: this.options.referenceLng,
 					ns
 				}, this.options));
-				if (keys.length) request(defaults({ authorize: true }, this.options), url, keys, doneOne);
-				else doneOne();
+				const bytes = typeof TextEncoder === "function" ? new TextEncoder().encode(JSON.stringify(keys)).length : Infinity;
+				const useKeepalive = bytes <= keepaliveBudget;
+				if (useKeepalive) keepaliveBudget -= bytes;
+				request(defaults({
+					authorize: true,
+					keepalive: useKeepalive
+				}, this.options), url, keys, doneOne(ns, keys));
 			});
 		}
 	};

@@ -1,6 +1,8 @@
 ### 6.1.4
 
 - update i18next-browser-languagedetector dep (8.3.1: a language with an `@`, like `sr@latin`, is detected again from the cookie, query string and hash)
+- update locize-lastused dep (5.2.0: no longer stops sending after a send with nothing new, sends while new keys keep coming, sends a key again 12 hours after it was sent, keeps a failed send's keys for one more try)
+- update i18next-locize-backend dep (10.2.0: missing keys are saved one request at a time per namespace, a 429, a 5xx or no answer is tried again, what still fails is logged)
 
 ### 6.1.3
 
